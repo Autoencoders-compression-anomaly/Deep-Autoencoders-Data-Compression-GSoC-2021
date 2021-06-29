@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def plot():
-    data_df = pd.read_csv('27D_opensCMS_preprocessed_data.csv')
+    data_df = pd.read_csv('27D_openCMS_preprocessed_data.csv')
 
     variable_list = ['pt_', 'eta_', 'phi_', 'mass_',
                      'fX', 'fY', 'fZ', 'mJetArea',
@@ -33,12 +33,17 @@ def plot():
                 prefix + 'mChargedMuEnergy', prefix + 'mNeutralEmEnergy', prefix + 'mChargedMultiplicity',
                 prefix + 'mNeutralMultiplicity']
 
-    n_bins = 50
+    n_bins = 100
 
     for kk in range(0, 28):
-        n_hist_data, bin_edges, _ = plt.hist(data_df[branches[kk]], color='orange', label='Input', alpha=1, bins=n_bins)
-        plt.xlabel(xlabel=variable_list[kk])
-        plt.ylabel('# of events')
+        if branches[kk] == prefix + 'pt_' or branches[kk] == prefix + 'mass_':
+            n_hist_data, bin_edges, _ = plt.hist(data_df[branches[kk]], color='orange', label='Input', alpha=1, bins=n_bins, log=True)
+            plt.xlabel(xlabel=variable_list[kk])
+            plt.ylabel('# of events')
+        else:
+            n_hist_data, bin_edges, _ = plt.hist(data_df[branches[kk]], color='orange', label='Input', alpha=1, bins=n_bins)
+            plt.xlabel(xlabel=variable_list[kk])
+            plt.ylabel('# of events')
         plt.show()
 
 plot()

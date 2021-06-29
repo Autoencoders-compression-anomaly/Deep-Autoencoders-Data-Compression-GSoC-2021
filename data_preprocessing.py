@@ -1,11 +1,10 @@
 import pandas as pd
-import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 
 
-def preprocess(filename='27D_opensCMS_data.csv'):
+def preprocess(filename='27D_openCMS_data.csv'):
     data_df = pd.read_csv(filename)
     data_df = data_df.drop(['entry', 'subentry'], axis=1)
     # data_df = data_df.astype('float32')
@@ -26,9 +25,8 @@ def preprocess(filename='27D_opensCMS_data.csv'):
     print('Test data shape: ')
     print(test_set.shape)
 
-    data_df.to_csv('27D_opensCMS_preprocessed_data.csv')
+    data_df.to_csv('27D_openCMS_preprocessed_data.csv')
 
     return train_set, test_set
 
 
-preprocess()
