@@ -1,31 +1,32 @@
 import pandas as pd
 import tensorflow as tf
 import numpy as np
-import datetime
 import os
+import time
 import matplotlib.pyplot as plt
-from data_preprocessing import preprocess
 from sklearn.utils import shuffle
 
 
 # Parameters
 input_dim = 28
 hidden_size1 = 100
-hidden_size2 = 100
+hidden_size2 = 50
+hidden_size3 = 30
 z_dim = 20
 
 batch_size = 100
-n_epochs = 1000
+n_epochs = 2
 learning_rate = 0.001
 beta1 = 0.9
 results_path = './autoencoders/Results/Standard_AE'
 saved_model_path = results_path + '/Saved_models/'
 
 # Placeholders for input data and the targets
-x_input = tf.placeholder(dtype=tf.float32, shape=[batch_size, input_dim], name='Input')
-x_target = tf.placeholder(dtype=tf.float32, shape=[batch_size, input_dim], name='Target')
+x_input = tf.placeholder(dtype=tf.float32, shape=[None, input_dim], name='Input')
+x_target = tf.placeholder(dtype=tf.float32, shape=[None, input_dim], name='Target')
 decoder_input = tf.placeholder(dtype=tf.float32, shape=[1, z_dim], name='Decoder_input')
 
+recontruct = True
 
 def dense(x, n1, n2, name):
     """
@@ -55,9 +56,11 @@ def encoder(x, reuse=False):
     if reuse:
         tf.get_variable_scope().reuse_variables()
     with tf.name_scope('Encoder'):
-        e_dense_1 = tf.nn.relu(dense(x, input_dim, hidden_size1, 'e_dense_1'))
-        e_dense_2 = tf.nn.relu(dense(e_dense_1, hidden_size1, hidden_size2, 'e_dense_2'))
-        latent_variable = dense(e_dense_2, hidden_size2, z_dim, 'e_latent_variable')
+        e_dense_1 = tf.nn.tanh(dense(x, input_dim, hidden_size1, 'e_dense_1'))
+        e_dense_2 = tf.nn.tanh(dense(e_dense_1, hidden_size1, hidden_size2, 'e_dense_2'))
+        e_dense_3 = tf.nn.tanh(dense(e_dense_2, hidden_size2, hidden_size3, 'e_dense_3'))
+        #latent_variable = dense(e_dense_3, hidden_size3, z_dim, 'e_latent_variable')
+        latent_variable = tf.nn.tanh(dense(e_dense_3, hidden_size3, z_dim, 'e_latent_variable'))
         return latent_variable
 
 
@@ -72,10 +75,18 @@ def decoder(x, reuse=False):
     if reuse:
         tf.get_variable_scope().reuse_variables()
     with tf.name_scope('Decoder'):
-        d_dense_1 = tf.nn.relu(dense(x, z_dim, hidden_size2, 'd_dense_1'))
-        d_dense_2 = tf.nn.relu(dense(d_dense_1, hidden_size2, hidden_size1, 'd_dense_2'))
-        output = tf.nn.sigmoid(dense(d_dense_2, hidden_size1, input_dim, 'd_output'))
+        d_dense_1 = tf.nn.tanh(dense(x, z_dim, hidden_size3, 'd_dense_1'))
+        d_dense_2 = tf.nn.tanh(dense(d_dense_1, hidden_size3, hidden_size2, 'd_dense_2'))
+        e_dense_3 = tf.nn.tanh(dense(d_dense_2, hidden_size2, hidden_size1, 'd_dense_3'))
+        output = tf.nn.tanh(dense(e_dense_3, hidden_size1, input_dim, 'd_output'))
         return output
+
+
+def reconstruct_variables(sess=None, op=None, data=None):
+    # run the trained AE for predictions on the test data
+    reconstructed_data = sess.run(op, feed_dict={x_input: data})
+    print('Reconstructed data shape: {}'.format(reconstructed_data.shape))
+    # We are going to plot the reconstructed data below
 
 
 def train(train_model=True, train_data=None, test_data=None):
@@ -103,26 +114,38 @@ def train(train_model=True, train_data=None, test_data=None):
     with tf.Session() as sess:
         sess.run(init)
         if train_model:
-
+            start = time.time()
             for i in range(n_epochs):
                 train_data = shuffle(train_data)
                 # break the train data df into chunks of size batch_size
-                train_df = [train_data[x:x + batch_size] for x in range(0, train_data.shape[0], batch_size)]
-                count = 0
-                for batch in train_df:
-                    if batch.shape[0] == batch_size:
-                        count += 1
-                        sess.run(optimizer, feed_dict={x_input: batch, x_target: batch})
+                train_batches = [train_data[x:x + batch_size] for x in range(0, train_data.shape[0], batch_size)]
 
-                        if count % 50 == 0:
-                            batch_loss = sess.run([loss], feed_dict={x_input: batch, x_target: batch})
-                            print("Loss: {}".format(batch_loss))
-                            print("Epoch: {}, iteration: {}".format(i, count))
-                        step += 1
-                    saver.save(sess, save_path=saved_model_path, global_step=step)
+                mean_loss = 0.0
+                for batch in train_batches:
+                    sess.run(optimizer, feed_dict={x_input: batch, x_target: batch})
+
+                    batch_loss = sess.run([loss], feed_dict={x_input: batch, x_target: batch})
+                    mean_loss += batch_loss[0]
+                    step += 1
+
+                # Calculate the mean loss over all batches in one epoch
+                mean_loss = float(mean_loss)/len(train_batches)
+                # Saving takes a lot of time
+                # saver.save(sess, save_path=saved_model_path, global_step=step)
                 print("Model Trained!")
 
-            print("Saved Model Path: {}".format(saved_model_path))
+                validation_loss = sess.run([loss], feed_dict={x_input: test_data, x_target: test_data})
+                print('\n-------------------------------------------------------------\n')
+                print('Train loss after epoch {}: {}'.format(i, mean_loss))
+                print('Validation loss after epoch {}: {}'.format(i, validation_loss))
+                print("Elapsed time {:.2f} sec".format(time.time() - start))
+                print('\n-------------------------------------------------------------\n')
+
+            # print("Saved Model Path: {}".format(saved_model_path))
+
+            if recontruct == True:
+                reconstruct_variables(sess=sess, op=decoder_output, data=test_data)
+
         else:
             all_results = os.listdir(results_path)
             all_results.sort()
