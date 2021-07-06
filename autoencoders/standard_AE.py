@@ -86,7 +86,7 @@ def reconstruct_variables(sess=None, op=None, data=None):
     # run the trained AE for predictions on the test data
     reconstructed_data = sess.run(op, feed_dict={x_input: data})
     print('Reconstructed data shape: {}'.format(reconstructed_data.shape))
-    # We are going to plot the reconstructed data below
+    return reconstructed_data
 
 
 def train(train_model=True, train_data=None, test_data=None):
@@ -143,8 +143,9 @@ def train(train_model=True, train_data=None, test_data=None):
 
             # print("Saved Model Path: {}".format(saved_model_path))
 
-            if recontruct == True:
-                reconstruct_variables(sess=sess, op=decoder_output, data=test_data)
+            if recontruct:
+                reconstructed_data = reconstruct_variables(sess=sess, op=decoder_output, data=test_data)
+                return reconstructed_data
 
         else:
             all_results = os.listdir(results_path)

@@ -31,7 +31,7 @@ def load_cms_data(filename="open_cms_data.root"):
          prefix + 'm_specific.mChargedEmEnergy', prefix + 'm_specific.mChargedMuEnergy', prefix + 'm_specific.mNeutralEmEnergy',
          prefix + 'm_specific.mChargedMultiplicity', prefix + 'm_specific.mNeutralMultiplicity'],       library="pd")
 
-    prefix2 = 'ak5PFJets.'
+    prefix2 = 'ak5PFJets_'
     # Rename the column names to be shorter
     dataframe.columns = [prefix2 + 'pt_', prefix2 + 'eta_', prefix2 + 'phi_', prefix2 + 'mass_',
                          prefix2 + 'fX', prefix2 + 'fY', prefix2 + 'fZ', prefix2 + 'mJetArea', prefix2 + 'mPileupEnergy',
@@ -45,6 +45,7 @@ def load_cms_data(filename="open_cms_data.root"):
 
 
     print("\nDataframe:")
+    dataframe.sort_values(by=[prefix2 + 'pt_'])
     print(dataframe.head())
     dataframe.to_csv('27D_openCMS_data.csv')
     return dataframe
