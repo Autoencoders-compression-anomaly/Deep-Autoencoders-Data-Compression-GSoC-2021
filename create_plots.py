@@ -45,19 +45,26 @@ def plot_initial_data(input_data):
                                                  bins=n_bins, log=True)
             plt.xlabel(xlabel=variable_list[kk])
             plt.ylabel('# of jets')
+            plt.suptitle(variable_list[kk])
+            if save:
+                plt.savefig(os.path.join(save_dir, variable_list[kk] + '.png'))
         elif branches[kk] == prefix + 'phi_':
             n_hist_data, bin_edges, _ = plt.hist(input_data[branches[kk]], color='orange', label='Input', alpha=1,
                                                  bins=50)
             plt.xlabel(xlabel=variable_list[kk])
             plt.ylabel('# of jets')
+            plt.suptitle(variable_list[kk])
+            if save:
+                plt.savefig(os.path.join(save_dir, variable_list[kk] + '.png'))
         else:
             n_hist_data, bin_edges, _ = plt.hist(input_data[branches[kk]], color='orange', label='Input', alpha=1,
                                                  bins=n_bins)
             plt.xlabel(xlabel=variable_list[kk])
             plt.ylabel('# of jets')
+            plt.suptitle(variable_list[kk])
+            if save:
+                plt.savefig(os.path.join(save_dir, variable_list[kk] + '.png'))
         plt.show()
-        if save:
-            plt.savefig(os.path.join(save_dir, variable_list[kk] + '.png'))
 
 
 def plot_test_pred_data(test_data, predicted_data):

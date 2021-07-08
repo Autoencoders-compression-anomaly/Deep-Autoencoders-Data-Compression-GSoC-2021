@@ -10,12 +10,13 @@ from sklearn.utils import shuffle
 # Parameters
 input_dim = 28
 hidden_size1 = 100
-hidden_size2 = 50
-hidden_size3 = 30
+hidden_size2 = 200
+hidden_size3 = 100
+hidden_size4 = 50
 z_dim = 20
 
 batch_size = 100
-n_epochs = 2
+n_epochs = 20
 learning_rate = 0.001
 beta1 = 0.9
 results_path = './autoencoders/Results/Standard_AE'
@@ -59,8 +60,9 @@ def encoder(x, reuse=False):
         e_dense_1 = tf.nn.tanh(dense(x, input_dim, hidden_size1, 'e_dense_1'))
         e_dense_2 = tf.nn.tanh(dense(e_dense_1, hidden_size1, hidden_size2, 'e_dense_2'))
         e_dense_3 = tf.nn.tanh(dense(e_dense_2, hidden_size2, hidden_size3, 'e_dense_3'))
+        e_dense_4 = tf.nn.tanh(dense(e_dense_3, hidden_size3, hidden_size4, 'e_dense_4'))
         #latent_variable = dense(e_dense_3, hidden_size3, z_dim, 'e_latent_variable')
-        latent_variable = tf.nn.tanh(dense(e_dense_3, hidden_size3, z_dim, 'e_latent_variable'))
+        latent_variable = tf.nn.tanh(dense(e_dense_4, hidden_size4, z_dim, 'e_latent_variable'))
         return latent_variable
 
 
@@ -75,10 +77,11 @@ def decoder(x, reuse=False):
     if reuse:
         tf.get_variable_scope().reuse_variables()
     with tf.name_scope('Decoder'):
-        d_dense_1 = tf.nn.tanh(dense(x, z_dim, hidden_size3, 'd_dense_1'))
-        d_dense_2 = tf.nn.tanh(dense(d_dense_1, hidden_size3, hidden_size2, 'd_dense_2'))
-        e_dense_3 = tf.nn.tanh(dense(d_dense_2, hidden_size2, hidden_size1, 'd_dense_3'))
-        output = tf.nn.tanh(dense(e_dense_3, hidden_size1, input_dim, 'd_output'))
+        d_dense_1 = tf.nn.tanh(dense(x, z_dim, hidden_size4, 'd_dense_1'))
+        d_dense_2 = tf.nn.tanh(dense(d_dense_1, hidden_size4, hidden_size3, 'd_dense_2'))
+        d_dense_3 = tf.nn.tanh(dense(d_dense_2, hidden_size3, hidden_size2, 'd_dense_3'))
+        d_dense_4 = tf.nn.tanh(dense(d_dense_3, hidden_size2, hidden_size1, 'd_dense_4'))
+        output = tf.nn.tanh(dense(d_dense_4, hidden_size1, input_dim, 'd_output'))
         return output
 
 
@@ -115,7 +118,11 @@ def train(train_model=True, train_data=None, test_data=None):
         sess.run(init)
         if train_model:
             start = time.time()
+            train_loss = []
+            val_loss = []
+            epochs = []
             for i in range(n_epochs):
+                epochs.append(i+1)
                 train_data = shuffle(train_data)
                 # break the train data df into chunks of size batch_size
                 train_batches = [train_data[x:x + batch_size] for x in range(0, train_data.shape[0], batch_size)]
@@ -130,11 +137,16 @@ def train(train_model=True, train_data=None, test_data=None):
 
                 # Calculate the mean loss over all batches in one epoch
                 mean_loss = float(mean_loss)/len(train_batches)
+
+                # store train loss for plotting
+                train_loss.append(mean_loss)
                 # Saving takes a lot of time
                 # saver.save(sess, save_path=saved_model_path, global_step=step)
                 print("Model Trained!")
 
                 validation_loss = sess.run([loss], feed_dict={x_input: test_data, x_target: test_data})
+                # store validation loss for plotting
+                val_loss.append(validation_loss)
                 print('\n-------------------------------------------------------------\n')
                 print('Train loss after epoch {}: {}'.format(i, mean_loss))
                 print('Validation loss after epoch {}: {}'.format(i, validation_loss))
@@ -142,6 +154,16 @@ def train(train_model=True, train_data=None, test_data=None):
                 print('\n-------------------------------------------------------------\n')
 
             # print("Saved Model Path: {}".format(saved_model_path))
+            plt.figure()
+            plt.plot(epochs, train_loss, 'g-', label="Train_loss")
+            plt.plot(epochs, val_loss, 'r-', label="Validation_loss")
+            plt.title('AE loss vs epochs')
+            plt.xlabel('Epochs')
+            plt.ylabel('AE Loss')
+            plt.xticks(epochs[0:19])
+            plt.legend()
+            plt.show()
+
 
             if recontruct:
                 reconstructed_data = reconstruct_variables(sess=sess, op=decoder_output, data=test_data)
