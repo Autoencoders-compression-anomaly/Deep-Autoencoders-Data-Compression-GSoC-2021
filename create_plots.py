@@ -101,7 +101,6 @@ def plot_test_pred_data(test_data, predicted_data):
         plt.suptitle(variable_list[kk])
         plt.xlabel(xlabel=variable_list[kk])
         plt.ylabel('Number of jets')
-        # ms.sciy()
         plt.yscale('log')
         plt.legend()
         if save:
@@ -109,3 +108,31 @@ def plot_test_pred_data(test_data, predicted_data):
 
 
 # plot(data_df = pd.read_csv('27D_openCMS_preprocessed_data.csv'))
+
+def plot_4D_data(test_data, predicted_data):
+
+    save_dir = "D:\Desktop\GSoC-ATLAS\AE_4D_plots"
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    save = True
+
+    variable_list = [r'$p_T$', r'$\eta$', r'$\phi$', r'$E$']
+    colors = ['pink', 'green']
+
+    test_data = test_data.values
+
+    alph = 0.8
+    n_bins = 200
+
+    for kk in np.arange(4):
+        plt.figure()
+        n_hist_data, bin_edges, _ = plt.hist(test_data[:, kk], color=colors[1], label='Input', alpha=1, bins=n_bins)
+        n_hist_pred, _, _ = plt.hist(predicted_data[:, kk], color=colors[0], label='Output', alpha=alph, bins=bin_edges)
+        plt.suptitle(variable_list[kk])
+        plt.xlabel(xlabel=variable_list[kk])
+        plt.ylabel('Number of events')
+
+        plt.yscale('log')
+        plt.show()
+
