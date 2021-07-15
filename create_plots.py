@@ -2,10 +2,16 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import corner
+import arviz as az
 
 
-def plot_initial_data(input_data):
-    save_dir = "D:\Desktop\GSoC-ATLAS\initial_data_plots"
+
+def plot_initial_data(input_data, normalized=False):
+    if normalized:
+        save_dir = "D:\Desktop\GSoC-ATLAS\preprocessed_data_plots"
+    else:
+        save_dir = "D:\Desktop\GSoC-ATLAS\initial_data_plots"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -67,8 +73,12 @@ def plot_initial_data(input_data):
         plt.show()
 
 
-def plot_test_pred_data(test_data, predicted_data):
-    save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots"
+def plot_test_pred_data(test_data, predicted_data, vae=False):
+    if vae:
+        save_dir = "D:\Desktop\GSoC-ATLAS\VAE_plots"
+    else:
+        save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots"
+
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -136,3 +146,35 @@ def plot_4D_data(test_data, predicted_data):
         plt.yscale('log')
         plt.show()
 
+
+def plot_residuals(test_data, predicted_data):
+    # Calculate the residuals
+    residual_test = np.absolute(test_data - predicted_data)
+    #residual_train = np.absolute(train_data - prediction_train)
+    plt.figure()
+
+    # Plotting the scatter plots
+    print("These are the scatter plots")
+    plt.scatter(test_data, residual_test)
+    plt.title("Test data")
+    plt.show()
+
+    plt.figure()
+    # Plotting Histograms
+    print("These are the histograms")
+    plt.hist(residual_test, 50)
+    plt.title("Residuals on test data")
+    plt.show()
+
+
+def correlation_plots(test_data, predicted_data):
+    pt = 'ak5PFJets_pt_'
+    eta = 'ak5PFJets_eta_'
+    phi = 'ak5PFJets_phi_'
+    mass = 'ak5PFJets_mass_'
+    test_data = test_data[[pt, eta, phi, mass]]
+    #predicted_data = predicted_data[[pt, eta, phi, mass]]
+
+    figure = corner.corner(test_data)
+    #corner.corner(predicted_data, fig=figure, color='red')
+    plt.show()

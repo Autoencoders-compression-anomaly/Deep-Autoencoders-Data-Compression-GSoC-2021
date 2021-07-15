@@ -49,6 +49,3 @@ def load_cms_data(filename="open_cms_data.root"):
     print(dataframe.head())
     dataframe.to_csv('27D_openCMS_data.csv')
     return dataframe
-
-
-load_cms_data()

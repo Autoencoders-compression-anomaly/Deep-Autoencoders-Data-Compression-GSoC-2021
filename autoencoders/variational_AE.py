@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
 
 
-class Standard_Autoencoder:
+class Variational_Autoencoder:
     def __init__(self, input_dim, z_dim):
         # Parameters
         self.input_dim = input_dim
@@ -17,12 +17,11 @@ class Standard_Autoencoder:
         self.hidden_size4 = 30
         self.z_dim = z_dim
 
-        self.prob = 1.0
         self.batch_size = 256
         self.n_epochs = 30
         self.learning_rate = 0.001
         self.beta1 = 0.9
-        self.results_path = './autoencoders/Results/Standard_AE'
+        self.results_path = './autoencoders/Results/Variational_AE'
         self.saved_model_path = self.results_path + '/Saved_models/'
 
         # Placeholders for input data and the targets
@@ -60,17 +59,13 @@ class Standard_Autoencoder:
             tf.get_variable_scope().reuse_variables()
         with tf.name_scope('Encoder'):
             e_dense_1 = tf.nn.leaky_relu(self.dense(x, self.input_dim, self.hidden_size1, 'e_dense_1'))
-            e_dense_1 = tf.nn.dropout(e_dense_1, keep_prob=self.prob)
             e_dense_2 = tf.nn.leaky_relu(self.dense(e_dense_1, self.hidden_size1, self.hidden_size2, 'e_dense_2'))
-            e_dense_2 = tf.nn.dropout(e_dense_2, keep_prob=self.prob)
             e_dense_3 = tf.nn.leaky_relu(self.dense(e_dense_2, self.hidden_size2, self.hidden_size3, 'e_dense_3'))
-            e_dense_3 = tf.nn.dropout(e_dense_3, keep_prob=self.prob)
             e_dense_4 = tf.nn.leaky_relu(self.dense(e_dense_3, self.hidden_size3, self.hidden_size4, 'e_dense_4'))
-            e_dense_4 = tf.nn.dropout(e_dense_4, keep_prob=self.prob)
             # latent_variable = dense(e_dense_3, hidden_size3, z_dim, 'e_latent_variable')
-            latent_variable = tf.nn.leaky_relu(self.dense(e_dense_4, self.hidden_size4, self.z_dim, 'e_latent_variable'))
-            latent_variable = tf.nn.dropout(latent_variable, keep_prob=self.prob)
-            return latent_variable
+            mean = tf.nn.tanh(self.dense(e_dense_4, self.hidden_size4, self.z_dim, 'e_mean'))
+            log_stddev = tf.nn.tanh(self.dense(e_dense_4, self.hidden_size4, self.z_dim, 'e_stddev'))
+            return mean, log_stddev
 
     # The Decoder of the network
     def decoder(self, x, reuse=False):
@@ -91,27 +86,37 @@ class Standard_Autoencoder:
             return output
 
     def reconstruct_variables(self, sess=None, op=None, data=None):
-        self.prob = 1.0
         # run the trained AE for predictions on the test data
         reconstructed_data = sess.run(op, feed_dict={self.x_input: data})
         print('Reconstructed data shape: {}'.format(reconstructed_data.shape))
         return reconstructed_data
+
+    # function for sampling from the latent space
+    def sampler(self, mean, log_stddev):
+        # we sample from the standard normal a matrix of batch_size*latent_size(taking into account minibatches)
+        std_norm = tf.random_normal(shape=(tf.shape(mean)[0], self.z_dim), mean=0, stddev=1)
+        # sampling from Z~N(mu, sigma^2) is the same as sampling from mu + sigma*X, X~N(0,1)
+        return mean + tf.exp(log_stddev) * std_norm  #
 
     def train(self, train_model=True, train_data=None, test_data=None):
         """
         Used to train the autoencoder by passing in the necessary inputs.
         :param train_model: True -> Train the model, False -> Load the latest trained model and show the reconstructed variables.
         """
-
         with tf.variable_scope(tf.get_variable_scope()):
-            encoder_output = self.encoder(self.x_input)
+            mean, log_stddev = self.encoder(self.x_input)
+            encoder_output = self.sampler(mean, log_stddev)
             decoder_output = self.decoder(encoder_output)
 
         with tf.variable_scope(tf.get_variable_scope()):
             reconstructed_variables = self.decoder(self.decoder_input, reuse=True)
 
         # Loss
-        loss = tf.reduce_mean(tf.square(self.x_target - decoder_output))
+        reconstruction_loss = tf.reduce_sum(tf.pow(self.x_target - decoder_output, 2), axis=-1)
+        # compute KL loss
+        kl_loss = -0.5 * tf.reduce_sum(1 + log_stddev - tf.square(mean) - tf.square(tf.exp(log_stddev)), axis=-1)
+        # return the avg loss over all samples
+        loss = tf.reduce_mean(reconstruction_loss + kl_loss)
 
         # Optimizer
         optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1).minimize(loss)
@@ -150,9 +155,8 @@ class Standard_Autoencoder:
                     # Saving takes a lot of time
                     # saver.save(sess, save_path=saved_model_path, global_step=step)
                     print("Model Trained!")
-                    self.prob = 1.0
+
                     validation_loss = sess.run([loss], feed_dict={self.x_input: test_data, self.x_target: test_data})
-                    self.prob = 1.0
                     # store validation loss for plotting
                     val_loss.append(validation_loss)
                     print('\n-------------------------------------------------------------\n')
@@ -165,10 +169,10 @@ class Standard_Autoencoder:
                 plt.figure()
                 plt.plot(epochs, train_loss, 'g-', label="Train_loss")
                 plt.plot(epochs, val_loss, 'r-', label="Validation_loss")
-                plt.title('AE loss vs epochs')
+                plt.title('Variational_AE loss vs epochs')
                 plt.xlabel('Epochs')
                 plt.ylabel('AE Loss')
-                plt.xticks(np.arange(0, 30, step=5))
+                plt.xticks(epochs[:])
                 plt.legend()
                 plt.show()
 

@@ -6,19 +6,28 @@ from sklearn.utils import shuffle
 
 
 def preprocess_28D(data_df):
-
     data_df = data_df.drop(['entry', 'subentry'], axis=1)
-    # data_df = data_df.sort_values(by=['ak5PFJets_pt_'])
+    data_df = data_df.sort_values(by=['ak5PFJets_pt_'])
 
     # filter out jets having pT > 8 TeV
     data_df = data_df[data_df.ak5PFJets_pt_ < 8000]
-    
+    data_df = data_df[data_df.ak5PFJets_mass_ < 800]
+
+    temp_df = data_df
+    # Perform a custom normalization technique for the 4-momentum
+    temp_df = custom_normalization(temp_df)
+
     # Standardize our data using Standard Scalar from sklearn
     scaler = StandardScaler()
     data_df[data_df.columns] = scaler.fit_transform(data_df)
+
+    data_df['ak5PFJets_pt_'] = temp_df['ak5PFJets_pt_']
+    data_df['ak5PFJets_phi_'] = temp_df['ak5PFJets_phi_']
+    data_df['ak5PFJets_eta_'] = temp_df['ak5PFJets_eta_']
+    data_df['ak5PFJets_mass_'] = temp_df['ak5PFJets_mass_']
+
     print('Normalized data:')
     print(data_df)
-
     # shuffling the data before splitting
     data_df = shuffle(data_df)
 
@@ -33,6 +42,22 @@ def preprocess_28D(data_df):
     data_df.to_csv('27D_openCMS_preprocessed_data.csv')
 
     return data_df, train_set, test_set
+
+
+def custom_normalization(data):
+    pt_div = 1.2
+    pt_sub = 1.3
+    phi_div = 3
+    eta_div = 5
+    m_div = 1.8
+    m_add = 1
+
+    data['ak5PFJets_eta_'] = data['ak5PFJets_eta_'] / eta_div
+    data['ak5PFJets_phi_'] = data['ak5PFJets_phi_'] / phi_div
+    data['ak5PFJets_mass_'] = np.log10(data['ak5PFJets_mass_'] + m_add) / m_div
+    data['ak5PFJets_pt_'] = (np.log10(data['ak5PFJets_pt_']) - pt_sub) / pt_div
+
+    return data
 
 
 def preprocess_4D(input_path):
@@ -127,9 +152,10 @@ def preprocess_4D(input_path):
     A function to scale back the data to the original representation and 
     handle the integer-variables which have been transformed to floats during normalization
 """
+
+
 def post_process_28D(data_df, scaler):
     # TODO
     data_df[data_df.columns] = scaler.inverse_transform(data_df)
 
     return data_df
-
