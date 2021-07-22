@@ -2,9 +2,8 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import corner
-import arviz as az
-
+#import corner
+#import arviz as az
 
 
 def plot_initial_data(input_data, normalized=False):
@@ -15,9 +14,8 @@ def plot_initial_data(input_data, normalized=False):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    variable_list = ['pt_', 'eta_', 'phi_', 'mass_',
-                     'fX', 'fY', 'fZ', 'mJetArea',
-                     'mPileupEnergy', 'mChargedHadronEnergy', 'mNeutralHadronEnergy',
+    variable_list = ['pt_', 'eta_', 'phi_', 'mass_', 'mJetArea',
+                     'mChargedHadronEnergy', 'mNeutralHadronEnergy',
                      'mPhotonEnergy',
                      'mElectronEnergy', 'mMuonEnergy', 'mHFHadronEnergy',
                      'mHFEMEnergy', 'mChargedHadronMultiplicity',
@@ -33,8 +31,7 @@ def plot_initial_data(input_data, normalized=False):
     save = True  # Option to save figure
 
     branches = [prefix + 'pt_', prefix + 'eta_', prefix + 'phi_', prefix + 'mass_',
-                prefix + 'fX', prefix + 'fY', prefix + 'fZ', prefix + 'mJetArea',
-                prefix + 'mPileupEnergy', prefix + 'mChargedHadronEnergy', prefix + 'mNeutralHadronEnergy',
+                prefix + 'mJetArea', prefix + 'mChargedHadronEnergy', prefix + 'mNeutralHadronEnergy',
                 prefix + 'mPhotonEnergy',
                 prefix + 'mElectronEnergy', prefix + 'mMuonEnergy', prefix + 'mHFHadronEnergy',
                 prefix + 'mHFEMEnergy', prefix + 'mChargedHadronMultiplicity',
@@ -45,7 +42,7 @@ def plot_initial_data(input_data, normalized=False):
                 prefix + 'mChargedMuEnergy', prefix + 'mNeutralEmEnergy', prefix + 'mChargedMultiplicity',
                 prefix + 'mNeutralMultiplicity']
 
-    for kk in range(0, 28):
+    for kk in range(0, 24):
         if branches[kk] == prefix + 'pt_' or branches[kk] == prefix + 'mass_':
             n_hist_data, bin_edges, _ = plt.hist(input_data[branches[kk]], color='orange', label='Input', alpha=1,
                                                  bins=n_bins, log=True)
@@ -73,27 +70,38 @@ def plot_initial_data(input_data, normalized=False):
         plt.show()
 
 
-def plot_test_pred_data(test_data, predicted_data, vae=False):
+def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False):
     if vae:
         save_dir = "D:\Desktop\GSoC-ATLAS\VAE_plots"
+
+
+    if num_variables == 24:
+        save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots\d24"
+
+        variable_list = ['pt_', 'eta_', 'phi_', 'mass_', 'mJetArea',
+                         'mChargedHadronEnergy', 'mNeutralHadronEnergy',
+                         'mPhotonEnergy',
+                         'mElectronEnergy', 'mMuonEnergy', 'mHFHadronEnergy',
+                         'mHFEMEnergy', 'mChargedHadronMultiplicity',
+                         'mNeutralHadronMultiplicity',
+                         'mPhotonMultiplicity', 'mElectronMultiplicity',
+                         'mMuonMultiplicity',
+                         'mHFHadronMultiplicity', 'mHFEMMultiplicity', 'mChargedEmEnergy',
+                         'mChargedMuEnergy', 'mNeutralEmEnergy', 'mChargedMultiplicity',
+                         'mNeutralMultiplicity']
     else:
-        save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots"
+        save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots\d19"
+        variable_list = ['pt_', 'eta_', 'phi_', 'mass_', 'mJetArea',
+                         'mChargedHadronEnergy', 'mNeutralHadronEnergy',
+                         'mPhotonEnergy', 'mHFHadronEnergy',
+                         'mHFEMEnergy', 'mChargedHadronMultiplicity',
+                         'mNeutralHadronMultiplicity',
+                         'mPhotonMultiplicity', 'mElectronMultiplicity',
+                         'mHFHadronMultiplicity', 'mHFEMMultiplicity', 'mNeutralEmEnergy', 'mChargedMultiplicity',
+                         'mNeutralMultiplicity']
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-
-    variable_list = ['pt_', 'eta_', 'phi_', 'mass_',
-                     'fX', 'fY', 'fZ', 'mJetArea',
-                     'mPileupEnergy', 'mChargedHadronEnergy', 'mNeutralHadronEnergy',
-                     'mPhotonEnergy',
-                     'mElectronEnergy', 'mMuonEnergy', 'mHFHadronEnergy',
-                     'mHFEMEnergy', 'mChargedHadronMultiplicity',
-                     'mNeutralHadronMultiplicity',
-                     'mPhotonMultiplicity', 'mElectronMultiplicity',
-                     'mMuonMultiplicity',
-                     'mHFHadronMultiplicity', 'mHFEMMultiplicity', 'mChargedEmEnergy',
-                     'mChargedMuEnergy', 'mNeutralEmEnergy', 'mChargedMultiplicity',
-                     'mNeutralMultiplicity']
 
     colors = ['pink', 'green']
     prefix = 'ak5PFJets_'
@@ -101,10 +109,10 @@ def plot_test_pred_data(test_data, predicted_data, vae=False):
     save = True  # Option to save figure
 
     #predicted_data = predicted_data.detach().numpy()
-    test_data = test_data.values
+    #test_data = test_data.values
 
     # plot the input data along with the reconstructed from the AE
-    for kk in np.arange(28):
+    for kk in np.arange(num_variables):
         plt.figure()
         n_hist_data, bin_edges, _ = plt.hist(test_data[:, kk], color=colors[1], label='Input', alpha=1, bins=n_bins)
         n_hist_pred, _, _ = plt.hist(predicted_data[:, kk], color=colors[0], label='Output', alpha=0.8, bins=bin_edges)
@@ -127,10 +135,10 @@ def plot_4D_data(test_data, predicted_data):
 
     save = True
 
-    variable_list = [r'$p_T$', r'$\eta$', r'$\phi$', r'$E$']
+    variable_list = [r'$E$', r'$p_T$', r'$\eta$', r'$\phi$']
     colors = ['pink', 'green']
 
-    test_data = test_data.values
+    #test_data = test_data.values
 
     alph = 0.8
     n_bins = 200

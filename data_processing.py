@@ -1,13 +1,21 @@
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 
 
-def preprocess_28D(data_df):
+def preprocess_28D(data_df, data_4D, num_variables):
+
+
     data_df = data_df.drop(['entry', 'subentry'], axis=1)
-    data_df = data_df.sort_values(by=['ak5PFJets_pt_'])
+    data_df = data_df.sort_values(by=['ak5PFJets_mElectronEnergy'])
+    # drop variables that have only zero values
+    data_df = data_df.drop(['ak5PFJets_fX', 'ak5PFJets_fY', 'ak5PFJets_fZ', 'ak5PFJets_mPileupEnergy'], axis=1)
+
+    if num_variables == 19:
+        data_df = data_df.drop(['ak5PFJets_mChargedEmEnergy', 'ak5PFJets_mChargedMuEnergy', 'ak5PFJets_mMuonEnergy',
+                                'ak5PFJets_mMuonMultiplicity', 'ak5PFJets_mElectronEnergy'], axis=1)
 
     # filter out jets having pT > 8 TeV
     data_df = data_df[data_df.ak5PFJets_pt_ < 8000]
@@ -17,14 +25,22 @@ def preprocess_28D(data_df):
     # Perform a custom normalization technique for the 4-momentum
     temp_df = custom_normalization(temp_df)
 
-    # Standardize our data using Standard Scalar from sklearn
-    scaler = StandardScaler()
-    data_df[data_df.columns] = scaler.fit_transform(data_df)
+    # Normalize our data using Standard Scaler from sklearn
+    #scaler = StandardScaler()
+    # data_df[data_df.columns] = scaler.fit_transform(data_df)
+
+    # Normalize our data in the range (0, 1) using MinMax Scaler from sklearn
+    min_max_scaler = MinMaxScaler()
+    data_df[data_df.columns] = min_max_scaler.fit_transform(data_df)
+
 
     data_df['ak5PFJets_pt_'] = temp_df['ak5PFJets_pt_']
     data_df['ak5PFJets_phi_'] = temp_df['ak5PFJets_phi_']
     data_df['ak5PFJets_eta_'] = temp_df['ak5PFJets_eta_']
     data_df['ak5PFJets_mass_'] = temp_df['ak5PFJets_mass_']
+
+    if data_4D:
+        data_df = data_df[['ak5PFJets_mass_', 'ak5PFJets_pt_', 'ak5PFJets_eta_', 'ak5PFJets_phi_']]
 
     print('Normalized data:')
     print(data_df)
@@ -39,7 +55,7 @@ def preprocess_28D(data_df):
     print('Test data shape: ')
     print(test_set.shape)
 
-    data_df.to_csv('27D_openCMS_preprocessed_data.csv')
+    data_df.to_csv('28D_openCMS_preprocessed_data.csv')
 
     return data_df, train_set, test_set
 
