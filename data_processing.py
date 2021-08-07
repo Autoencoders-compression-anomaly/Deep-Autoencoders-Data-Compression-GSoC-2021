@@ -4,12 +4,15 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 
+"""
+This file includes functions for preprocessing the initial data
+"""
 
-def preprocess_28D(data_df, data_4D, num_variables):
 
-
+def preprocess_28D(data_df, num_variables, min_max_all):
     data_df = data_df.drop(['entry', 'subentry'], axis=1)
-    data_df = data_df.sort_values(by=['ak5PFJets_mElectronEnergy'])
+    data_df = data_df.sort_values(by=['ak5PFJets_pt_'])
+
     # drop variables that have only zero values
     data_df = data_df.drop(['ak5PFJets_fX', 'ak5PFJets_fY', 'ak5PFJets_fZ', 'ak5PFJets_mPileupEnergy'], axis=1)
 
@@ -21,26 +24,26 @@ def preprocess_28D(data_df, data_4D, num_variables):
     data_df = data_df[data_df.ak5PFJets_pt_ < 8000]
     data_df = data_df[data_df.ak5PFJets_mass_ < 800]
 
-    temp_df = data_df
-    # Perform a custom normalization technique for the 4-momentum
-    temp_df = custom_normalization(temp_df)
-
     # Normalize our data using Standard Scaler from sklearn
-    #scaler = StandardScaler()
+    # scaler = StandardScaler()
     # data_df[data_df.columns] = scaler.fit_transform(data_df)
-
-    # Normalize our data in the range (0, 1) using MinMax Scaler from sklearn
     min_max_scaler = MinMaxScaler()
-    data_df[data_df.columns] = min_max_scaler.fit_transform(data_df)
 
+    if min_max_all:
+        # Normalize all variables in the range (0, 1) using MinMax Scaler from sklearn
+        data_df[data_df.columns] = min_max_scaler.fit_transform(data_df)
+    else:
+        # Perform a custom normalization technique for the 4-momentum variables
+        temp_df = data_df.copy()
+        temp_df = custom_normalization(temp_df)
 
-    data_df['ak5PFJets_pt_'] = temp_df['ak5PFJets_pt_']
-    data_df['ak5PFJets_phi_'] = temp_df['ak5PFJets_phi_']
-    data_df['ak5PFJets_eta_'] = temp_df['ak5PFJets_eta_']
-    data_df['ak5PFJets_mass_'] = temp_df['ak5PFJets_mass_']
+        # Normalize the rest of the variables in the range (0, 1) using MinMax Scaler from sklearn
+        data_df[data_df.columns] = min_max_scaler.fit_transform(data_df)
 
-    if data_4D:
-        data_df = data_df[['ak5PFJets_mass_', 'ak5PFJets_pt_', 'ak5PFJets_eta_', 'ak5PFJets_phi_']]
+        data_df['ak5PFJets_pt_'] = temp_df['ak5PFJets_pt_'].values
+        data_df['ak5PFJets_phi_'] = temp_df['ak5PFJets_phi_'].values
+        data_df['ak5PFJets_eta_'] = temp_df['ak5PFJets_eta_'].values
+        data_df['ak5PFJets_mass_'] = temp_df['ak5PFJets_mass_'].values
 
     print('Normalized data:')
     print(data_df)
@@ -55,11 +58,15 @@ def preprocess_28D(data_df, data_4D, num_variables):
     print('Test data shape: ')
     print(test_set.shape)
 
+    # save preprocessed data to a csv file
     data_df.to_csv('28D_openCMS_preprocessed_data.csv')
 
-    return data_df, train_set, test_set
+    return data_df, train_set, test_set, min_max_scaler
 
 
+"""
+Custom normalization for the 4-momentum variables
+"""
 def custom_normalization(data):
     pt_div = 1.2
     pt_sub = 1.3

@@ -7,7 +7,6 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, TensorDataset
 
 
-
 class VAE(nn.Module):
     def __init__(self, n_features=4, z_dim=3):
         super(VAE, self).__init__()
@@ -31,9 +30,9 @@ class VAE(nn.Module):
         return self.en4(h3), self.en4(h3)
 
     def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5*logvar)
+        std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
-        return mu + eps*std
+        return mu + eps * std
 
     def decode(self, z):
         h4 = F.relu(self.de1(z))
@@ -53,7 +52,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.003)
 
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(recon_x, x, mu, logvar):
-    #BCE = F.binary_cross_entropy(recon_x, x.view(-1, 4), reduction='sum')
+    # BCE = F.binary_cross_entropy(recon_x, x.view(-1, 4), reduction='sum')
     mse_loss = nn.MSELoss()
     MSE = mse_loss(recon_x, x)
 
@@ -93,11 +92,11 @@ def train(epochs, train_data, test_data):
             if batch_idx % 10 == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_dl),
-                    100. * batch_idx / len(train_dl),
-                    loss.item() / len(data)))
+                           100. * batch_idx / len(train_dl),
+                           loss.item() / len(data)))
 
         print('====> Epoch: {} Average loss: {:.4f}'.format(
-              epoch, train_loss / len(train_dl)))
+            epoch, train_loss / len(train_dl)))
 
         model.eval()
         test_loss = 0

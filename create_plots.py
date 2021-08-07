@@ -7,6 +7,8 @@ import numpy as np
 
 
 def plot_initial_data(input_data, normalized=False):
+    input_data = input_data.sort_values(by=['ak5PFJets_pt_'])
+
     if normalized:
         save_dir = "D:\Desktop\GSoC-ATLAS\preprocessed_data_plots"
     else:

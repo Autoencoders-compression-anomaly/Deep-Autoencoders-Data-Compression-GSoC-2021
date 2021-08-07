@@ -18,6 +18,10 @@ from fastai.callback.tracker import EarlyStoppingCallback
 from fastai.test_utils import *
 import autoencoders.standard_autoencoders as ae
 
+"""
+This class trains the standard Autoencoder using fastai library
+"""
+
 
 class Autoencoder:
 
@@ -44,8 +48,7 @@ class Autoencoder:
         else:
             self.model = ae.AE_19D()
 
-    def train(self, test_set):
-        epochs = 30
+    def train(self, test_set, epochs):
         loss_function = nn.MSELoss()
 
         weight_decay = 1e-6
@@ -60,7 +63,7 @@ class Autoencoder:
         print('Learning rate with the steepest gradient:', lr_steep)
 
         start = time.perf_counter()  # Starts timer
-        # train our autoencoder for 100 epochs
+        # train our autoencoder
         learn.fit_one_cycle(epochs, 0.014, cbs=[ShowGraphCallback()])
         end = time.perf_counter()  # Ends timer
         delta_t = end - start

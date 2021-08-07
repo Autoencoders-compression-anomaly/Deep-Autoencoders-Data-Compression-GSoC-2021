@@ -6,28 +6,28 @@ import pandas as pd
 from data_loader import load_cms_data
 
 if __name__ == "__main__":
-    data_28D = True
-    use_vae = True
+    openCMS_data = True
+    use_vae = False
     # cms_data_df = load_cms_data(filename="open_cms_data.root")
     data_df = pd.read_csv('27D_openCMS_data.csv')
 
     # Plot the original data
-    plot_initial_data(input_data=data_df)
+    #plot_initial_data(input_data=data_df)
 
-    if data_28D:
-        data_df, train_data, test_data = preprocess_28D(data_df=data_df, data_4D=False, num_variables=19)
-        #plot_initial_data(input_data=data_df, normalized=True)
+    if openCMS_data:
+        data_df, train_data, test_data, scaler = preprocess_28D(data_df=data_df, num_variables=24, min_max_all=False)
+        data_df = data_df.sort_values(by=['ak5PFJets_pt_'])
+        # Plot preprocessed data
+        plot_initial_data(input_data=data_df, normalized=True)
 
         # Run the Autoencoder and obtain the reconstructed data
-        ae_28d = ae.Autoencoder(train_data, test_data, 19)
+        standard_ae = ae.Autoencoder(train_data, test_data, num_variables=24)
 
-        test_data, reconstructed_data = ae_28d.train(test_data)
+        test_data, reconstructed_data = standard_ae.train(test_data, epochs=30)
 
-        plot_test_pred_data(test_data, reconstructed_data, 19)
+        plot_test_pred_data(test_data, reconstructed_data, num_variables=24)
 
     else:
-        # Open CMS data
-        #data_df, train_data, test_data = preprocess_28D(data_df=data_df, data_4D=True, num_variables=4)
         # Dark machines data
         data_df, train_data, test_data = preprocess_4D('D:\Desktop\GSoC-ATLAS\data_4D.csv')
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         else:
             # Run the Autoencoder and obtain the reconstructed data
             ae_3d = ae.Autoencoder(train_data, test_data, 4)
-            test_data, reconstructed_data = ae_3d.train(test_data)
+            test_data, reconstructed_data = ae_3d.train(test_data, epochs=30)
 
             plot_4D_data(test_data, reconstructed_data)
 
