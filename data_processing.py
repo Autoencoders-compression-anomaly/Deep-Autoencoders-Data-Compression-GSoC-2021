@@ -9,7 +9,7 @@ This file includes functions for preprocessing the initial data
 """
 
 
-def preprocess_28D(data_df, num_variables, min_max_all):
+def preprocess_28D(data_df, num_variables, custom_norm):
     data_df = data_df.drop(['entry', 'subentry'], axis=1)
     data_df = data_df.sort_values(by=['ak5PFJets_pt_'])
 
@@ -29,7 +29,7 @@ def preprocess_28D(data_df, num_variables, min_max_all):
     # data_df[data_df.columns] = scaler.fit_transform(data_df)
     min_max_scaler = MinMaxScaler()
 
-    if min_max_all:
+    if not custom_norm:
         # Normalize all variables in the range (0, 1) using MinMax Scaler from sklearn
         data_df[data_df.columns] = min_max_scaler.fit_transform(data_df)
     else:

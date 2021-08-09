@@ -2,6 +2,7 @@ from data_processing import preprocess_28D, preprocess_4D
 import autoencoders.autoencoder as ae
 import autoencoders.variational_autoencoder as vae
 from create_plots import plot_initial_data, plot_test_pred_data, plot_4D_data, plot_residuals, correlation_plots
+from evaluate import evaluate_model
 import pandas as pd
 from data_loader import load_cms_data
 
@@ -10,22 +11,29 @@ if __name__ == "__main__":
     use_vae = False
     # cms_data_df = load_cms_data(filename="open_cms_data.root")
     data_df = pd.read_csv('27D_openCMS_data.csv')
-
+    custom_norm = False
+    num_of_variables = 24
     # Plot the original data
     #plot_initial_data(input_data=data_df)
 
     if openCMS_data:
-        data_df, train_data, test_data, scaler = preprocess_28D(data_df=data_df, num_variables=24, min_max_all=False)
-        data_df = data_df.sort_values(by=['ak5PFJets_pt_'])
+
+        # Preprocess data
+        data_df, train_data, test_data, scaler = preprocess_28D(data_df=data_df, num_variables=num_of_variables, custom_norm=custom_norm)
         # Plot preprocessed data
-        plot_initial_data(input_data=data_df, normalized=True)
+        #plot_initial_data(input_data=data_df, num_variables=num_of_variables, normalized=True)
 
-        # Run the Autoencoder and obtain the reconstructed data
-        standard_ae = ae.Autoencoder(train_data, test_data, num_variables=24)
+        # Initial the Autoencoder
+        standard_ae = ae.Autoencoder(train_data, test_data, num_variables=num_of_variables)
 
+        # Train the standard Autoencoder and obtain the reconstructions
         test_data, reconstructed_data = standard_ae.train(test_data, epochs=30)
 
-        plot_test_pred_data(test_data, reconstructed_data, num_variables=24)
+        # Evaluate the reconstructions of the network based on various metrics
+        evaluate_model(y_true=test_data, y_predicted=reconstructed_data)
+
+        # Plot the reconstructed along with the initial data
+        plot_test_pred_data(test_data, reconstructed_data, num_variables=num_of_variables)
 
     else:
         # Dark machines data

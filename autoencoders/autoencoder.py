@@ -64,7 +64,7 @@ class Autoencoder:
 
         start = time.perf_counter()  # Starts timer
         # train our autoencoder
-        learn.fit_one_cycle(epochs, 0.014, cbs=[ShowGraphCallback()])
+        learn.fit_one_cycle(epochs, lr_min, cbs=[ShowGraphCallback()])
         end = time.perf_counter()  # Ends timer
         delta_t = end - start
         print('Training took', delta_t, 'seconds')
@@ -72,7 +72,6 @@ class Autoencoder:
         plt.figure()
         recorder.plot_loss()
         plt.show()
-        print(learn.validate())
 
         data = torch.tensor(test_set.values, dtype=torch.float)
 

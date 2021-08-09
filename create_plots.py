@@ -6,45 +6,71 @@ import numpy as np
 #import arviz as az
 
 
-def plot_initial_data(input_data, normalized=False):
+def plot_initial_data(input_data, num_variables, normalized=False):
     input_data = input_data.sort_values(by=['ak5PFJets_pt_'])
 
     if normalized:
         save_dir = "D:\Desktop\GSoC-ATLAS\preprocessed_data_plots"
     else:
         save_dir = "D:\Desktop\GSoC-ATLAS\initial_data_plots"
+
+    prefix = 'ak5PFJets_'
+
+    if num_variables == 24:
+        save_dir = "D:\Desktop\GSoC-ATLAS\preprocessed_data_plots\d24"
+
+        variable_list = ['pt_', 'eta_', 'phi_', 'mass_', 'mJetArea',
+                         'mChargedHadronEnergy', 'mNeutralHadronEnergy',
+                         'mPhotonEnergy',
+                         'mElectronEnergy', 'mMuonEnergy', 'mHFHadronEnergy',
+                         'mHFEMEnergy', 'mChargedHadronMultiplicity',
+                         'mNeutralHadronMultiplicity',
+                         'mPhotonMultiplicity', 'mElectronMultiplicity',
+                         'mMuonMultiplicity',
+                         'mHFHadronMultiplicity', 'mHFEMMultiplicity', 'mChargedEmEnergy',
+                         'mChargedMuEnergy', 'mNeutralEmEnergy', 'mChargedMultiplicity',
+                         'mNeutralMultiplicity']
+
+        branches = [prefix + 'pt_', prefix + 'eta_', prefix + 'phi_', prefix + 'mass_',
+                    prefix + 'mJetArea', prefix + 'mChargedHadronEnergy', prefix + 'mNeutralHadronEnergy',
+                    prefix + 'mPhotonEnergy',
+                    prefix + 'mElectronEnergy', prefix + 'mMuonEnergy', prefix + 'mHFHadronEnergy',
+                    prefix + 'mHFEMEnergy', prefix + 'mChargedHadronMultiplicity',
+                    prefix + 'mNeutralHadronMultiplicity',
+                    prefix + 'mPhotonMultiplicity', prefix + 'mElectronMultiplicity',
+                    prefix + 'mMuonMultiplicity',
+                    prefix + 'mHFHadronMultiplicity', prefix + 'mHFEMMultiplicity', prefix + 'mChargedEmEnergy',
+                    prefix + 'mChargedMuEnergy', prefix + 'mNeutralEmEnergy', prefix + 'mChargedMultiplicity',
+                    prefix + 'mNeutralMultiplicity']
+    else:
+        save_dir = "D:\Desktop\GSoC-ATLAS\preprocessed_data_plots\d19"
+
+        variable_list = ['pt_', 'eta_', 'phi_', 'mass_', 'mJetArea',
+                         'mChargedHadronEnergy', 'mNeutralHadronEnergy',
+                         'mPhotonEnergy', 'mHFHadronEnergy',
+                         'mHFEMEnergy', 'mChargedHadronMultiplicity',
+                         'mNeutralHadronMultiplicity',
+                         'mPhotonMultiplicity', 'mElectronMultiplicity',
+                         'mHFHadronMultiplicity', 'mHFEMMultiplicity', 'mNeutralEmEnergy', 'mChargedMultiplicity',
+                         'mNeutralMultiplicity']
+
+        branches = [prefix + 'pt_', prefix + 'eta_', prefix + 'phi_', prefix + 'mass_',
+                    prefix + 'mJetArea', prefix + 'mChargedHadronEnergy', prefix + 'mNeutralHadronEnergy',
+                    prefix + 'mPhotonEnergy', prefix + 'mHFHadronEnergy',
+                    prefix + 'mHFEMEnergy', prefix + 'mChargedHadronMultiplicity',
+                    prefix + 'mNeutralHadronMultiplicity',
+                    prefix + 'mPhotonMultiplicity', prefix + 'mElectronMultiplicity',
+                    prefix + 'mHFHadronMultiplicity', prefix + 'mHFEMMultiplicity',
+                    prefix + 'mNeutralEmEnergy', prefix + 'mChargedMultiplicity',
+                    prefix + 'mNeutralMultiplicity']
+
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    variable_list = ['pt_', 'eta_', 'phi_', 'mass_', 'mJetArea',
-                     'mChargedHadronEnergy', 'mNeutralHadronEnergy',
-                     'mPhotonEnergy',
-                     'mElectronEnergy', 'mMuonEnergy', 'mHFHadronEnergy',
-                     'mHFEMEnergy', 'mChargedHadronMultiplicity',
-                     'mNeutralHadronMultiplicity',
-                     'mPhotonMultiplicity', 'mElectronMultiplicity',
-                     'mMuonMultiplicity',
-                     'mHFHadronMultiplicity', 'mHFEMMultiplicity', 'mChargedEmEnergy',
-                     'mChargedMuEnergy', 'mNeutralEmEnergy', 'mChargedMultiplicity',
-                     'mNeutralMultiplicity']
-
-    prefix = 'ak5PFJets_'
     n_bins = 100
     save = True  # Option to save figure
 
-    branches = [prefix + 'pt_', prefix + 'eta_', prefix + 'phi_', prefix + 'mass_',
-                prefix + 'mJetArea', prefix + 'mChargedHadronEnergy', prefix + 'mNeutralHadronEnergy',
-                prefix + 'mPhotonEnergy',
-                prefix + 'mElectronEnergy', prefix + 'mMuonEnergy', prefix + 'mHFHadronEnergy',
-                prefix + 'mHFEMEnergy', prefix + 'mChargedHadronMultiplicity',
-                prefix + 'mNeutralHadronMultiplicity',
-                prefix + 'mPhotonMultiplicity', prefix + 'mElectronMultiplicity',
-                prefix + 'mMuonMultiplicity',
-                prefix + 'mHFHadronMultiplicity', prefix + 'mHFEMMultiplicity', prefix + 'mChargedEmEnergy',
-                prefix + 'mChargedMuEnergy', prefix + 'mNeutralEmEnergy', prefix + 'mChargedMultiplicity',
-                prefix + 'mNeutralMultiplicity']
-
-    for kk in range(0, 24):
+    for kk in range(0, num_variables):
         if branches[kk] == prefix + 'pt_' or branches[kk] == prefix + 'mass_':
             n_hist_data, bin_edges, _ = plt.hist(input_data[branches[kk]], color='orange', label='Input', alpha=1,
                                                  bins=n_bins, log=True)
@@ -73,12 +99,12 @@ def plot_initial_data(input_data, normalized=False):
 
 
 def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False):
-    if vae:
-        save_dir = "D:\Desktop\GSoC-ATLAS\VAE_plots"
-
 
     if num_variables == 24:
-        save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots\d24"
+        if vae:
+            save_dir = "D:\Desktop\GSoC-ATLAS\VAE_plots\d24"
+        else:
+            save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots\d24"
 
         variable_list = ['pt_', 'eta_', 'phi_', 'mass_', 'mJetArea',
                          'mChargedHadronEnergy', 'mNeutralHadronEnergy',
@@ -92,7 +118,11 @@ def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False):
                          'mChargedMuEnergy', 'mNeutralEmEnergy', 'mChargedMultiplicity',
                          'mNeutralMultiplicity']
     else:
-        save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots\d19"
+        if vae:
+            save_dir = "D:\Desktop\GSoC-ATLAS\VAE_plots\d19"
+        else:
+            save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots\d19"
+
         variable_list = ['pt_', 'eta_', 'phi_', 'mass_', 'mJetArea',
                          'mChargedHadronEnergy', 'mNeutralHadronEnergy',
                          'mPhotonEnergy', 'mHFHadronEnergy',
@@ -106,7 +136,6 @@ def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False):
         os.makedirs(save_dir)
 
     colors = ['pink', 'green']
-    prefix = 'ak5PFJets_'
     n_bins = 100
     save = True  # Option to save figure
 
@@ -126,8 +155,6 @@ def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False):
         if save:
             plt.savefig(os.path.join(save_dir, variable_list[kk] + '.png'))
 
-
-# plot(data_df = pd.read_csv('27D_openCMS_preprocessed_data.csv'))
 
 def plot_4D_data(test_data, predicted_data):
 
