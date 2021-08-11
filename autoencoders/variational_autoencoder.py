@@ -1,14 +1,21 @@
 from __future__ import print_function
+
+import time
+
 import torch
 import torch.utils.data
+from fastai.callback.progress import ShowGraphCallback
 from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, TensorDataset
+from fastai import learner
+from fastai.data import core
+import matplotlib.pyplot as plt
 
 
 class VAE(nn.Module):
-    def __init__(self, n_features=4, z_dim=3):
+    def __init__(self, n_features=24, z_dim=15):
         super(VAE, self).__init__()
 
         self.en1 = nn.Linear(n_features, 200)
@@ -24,9 +31,9 @@ class VAE(nn.Module):
         self.z_dim = z_dim
 
     def encode(self, x):
-        h1 = F.relu(self.en1(x))
-        h2 = F.relu(self.en2(h1))
-        h3 = F.relu(self.en3(h2))
+        h1 = F.leaky_relu(self.en1(x))
+        h2 = F.leaky_relu(self.en2(h1))
+        h3 = F.leaky_relu(self.en3(h2))
         return self.en4(h3), self.en4(h3)
 
     def reparameterize(self, mu, logvar):
@@ -35,35 +42,44 @@ class VAE(nn.Module):
         return mu + eps * std
 
     def decode(self, z):
-        h4 = F.relu(self.de1(z))
-        h5 = F.relu(self.de2(h4))
-        h6 = F.relu(self.de3(h5))
-        return self.de4(h6)
+        h4 = F.leaky_relu(self.de1(z))
+        h5 = F.leaky_relu(self.de2(h4))
+        h6 = F.leaky_relu(self.de3(h5))
+        #out = torch.sigmoid(self.de4(h6))
+        #.view(-1, self.n_features, self.n_features)
+        out = self.de4(h6)
+        return out
 
     def forward(self, x):
         mu, logvar = self.encode(x.view(-1, self.n_features))
+        self.mu = mu
+        self.logvar = logvar
         z = self.reparameterize(mu, logvar)
-        return self.decode(z), mu, logvar
+        return self.decode(z)
+
+    # Reconstruction + KL divergence losses summed over all elements and batch
+    def vae_loss_function(self, recon_x, x):
+        #BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
+        mse_loss = nn.MSELoss()
+        MSE = mse_loss(recon_x, x)
+        # see Appendix B from VAE paper:
+        # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
+        # https://arxiv.org/abs/1312.6114
+        # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+        KLD = -0.5 * torch.sum(1 + self.logvar - self.mu.pow(2) - self.logvar.exp())
+
+        return MSE + KLD
 
 
 model = VAE()
-optimizer = optim.Adam(model.parameters(), lr=0.003)
+optimizer = optim.Adam(model.parameters(), lr=0.02)
 
 
-# Reconstruction + KL divergence losses summed over all elements and batch
-def loss_function(recon_x, x, mu, logvar):
-    # BCE = F.binary_cross_entropy(recon_x, x.view(-1, 4), reduction='sum')
-    mse_loss = nn.MSELoss()
-    MSE = mse_loss(recon_x, x)
 
-    # see Appendix B from VAE paper:
-    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    # https://arxiv.org/abs/1312.6114
-    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-    return MSE + KLD
 
+
+"""
 
 def train(epochs, train_data, test_data):
     # Constructs a tensor object of the data and wraps them in a TensorDataset object.
@@ -83,12 +99,15 @@ def train(epochs, train_data, test_data):
         model.train()
         train_loss = 0
         for batch_idx, (data, _) in enumerate(train_dl):
+            data = data.view(bs, 24)
+
             optimizer.zero_grad()
             recon_batch, mu, logvar = model(data)
             loss = loss_function(recon_batch, data, mu, logvar)
             loss.backward()
             train_loss += loss.item()
             optimizer.step()
+
             if batch_idx % 10 == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_dl),
@@ -115,3 +134,6 @@ def train(epochs, train_data, test_data):
     data = data.detach().numpy()
 
     return data, pred
+"""
+
+

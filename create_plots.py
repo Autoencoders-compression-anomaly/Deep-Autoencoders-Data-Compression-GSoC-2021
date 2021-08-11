@@ -98,10 +98,12 @@ def plot_initial_data(input_data, num_variables, normalized=False):
         plt.show()
 
 
-def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False):
+def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False, sae=False):
 
     if num_variables == 24:
-        if vae:
+        if sae:
+            save_dir = "D:\Desktop\GSoC-ATLAS\SAE_plots\d24"
+        elif vae:
             save_dir = "D:\Desktop\GSoC-ATLAS\VAE_plots\d24"
         else:
             save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots\d24"
@@ -118,7 +120,9 @@ def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False):
                          'mChargedMuEnergy', 'mNeutralEmEnergy', 'mChargedMultiplicity',
                          'mNeutralMultiplicity']
     else:
-        if vae:
+        if sae:
+            save_dir = "D:\Desktop\GSoC-ATLAS\SAE_plots\d19"
+        elif vae:
             save_dir = "D:\Desktop\GSoC-ATLAS\VAE_plots\d19"
         else:
             save_dir = "D:\Desktop\GSoC-ATLAS\AE_plots\d19"
