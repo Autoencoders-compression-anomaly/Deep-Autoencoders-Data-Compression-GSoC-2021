@@ -1,7 +1,8 @@
 from fastai.vision import *
 from autoencoders.variational_autoencoder import *
 
-def train(train_data, test_data, epochs):
+
+def train(variables, train_data, test_data, epochs):
     # Constructs a tensor object of the data and wraps them in a TensorDataset object.
     train_ds = TensorDataset(torch.tensor(train_data.values, dtype=torch.float),
                              torch.tensor(train_data.values, dtype=torch.float))
@@ -16,7 +17,7 @@ def train(train_data, test_data, epochs):
     valid_dl = DataLoader(valid_ds, batch_size=bs * 2)
     dls = core.DataLoaders(train_dl, valid_dl)
 
-    vae = VAE(n_features=24, z_dim=15)
+    vae = VAE(n_features=variables, z_dim=15)
 
     weight_decay = 1e-6
     recorder = learner.Recorder()

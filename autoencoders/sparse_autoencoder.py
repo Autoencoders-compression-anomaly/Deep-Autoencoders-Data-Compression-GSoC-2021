@@ -82,7 +82,7 @@ def fit(model, train_dl, train_ds, model_children, regular_param, optimizer):
         running_loss += loss.item()
 
     epoch_loss = running_loss / counter
-    print(f" Train Loss: {loss:.5f}")
+    print(f" Train Loss: {loss:.6f}")
 
     return epoch_loss
 
@@ -103,13 +103,13 @@ def validate(model, test_dl, test_ds, model_children):
             running_loss += loss.item()
 
     epoch_loss = running_loss / counter
-    print(f" Val Loss: {loss:.5f}")
+    print(f" Val Loss: {loss:.6f}")
     # save the reconstructed images every 5 epochs
     return epoch_loss
 
 
-def train(train_data, test_data, learning_rate, reg_param, epochs):
-    sae = SAE(n_features=24, z_dim=15)
+def train(variables, train_data, test_data, learning_rate, reg_param, epochs):
+    sae = SAE(n_features=variables, z_dim=15)
     model_children = list(sae.children())
 
     # Constructs a tensor object of the data and wraps them in a TensorDataset object.
@@ -118,7 +118,7 @@ def train(train_data, test_data, learning_rate, reg_param, epochs):
     valid_ds = TensorDataset(torch.tensor(test_data.values, dtype=torch.float),
                              torch.tensor(test_data.values, dtype=torch.float))
 
-    bs = 256
+    bs = 512
 
     # Converts the TensorDataset into a DataLoader object and combines into one DataLoaders object (a basic wrapper
     # around several DataLoader objects).
@@ -136,7 +136,7 @@ def train(train_data, test_data, learning_rate, reg_param, epochs):
         print(f"Epoch {epoch + 1} of {epochs}")
         train_epoch_loss = fit(model=sae, train_dl=train_dl, train_ds=train_ds, model_children=model_children,
                                optimizer=optimizer, regular_param=reg_param)
-        val_epoch_loss = validate(model=sae, test_dl=valid_dl, test_ds=valid_ds, model_children=model_children, regular_param=reg_param)
+        val_epoch_loss = validate(model=sae, test_dl=valid_dl, test_ds=valid_ds, model_children=model_children)
         train_loss.append(train_epoch_loss)
         val_loss.append(val_epoch_loss)
     end = time.time()
@@ -150,7 +150,7 @@ def train(train_data, test_data, learning_rate, reg_param, epochs):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    # plt.savefig('../outputs/loss.png')
+    plt.savefig('D:\Desktop\GSoC-ATLAS\learning_curves\sae_loss.png')
     plt.show()
 
     data = torch.tensor(test_data.values, dtype=torch.float)

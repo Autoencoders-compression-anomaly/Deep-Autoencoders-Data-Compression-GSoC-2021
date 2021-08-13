@@ -5,16 +5,43 @@ import autoencoders.sparse_autoencoder as sae
 from create_plots import plot_initial_data, plot_test_pred_data, plot_4D_data, correlation_plots
 from evaluate import evaluate_model
 import pandas as pd
+import argparse
 from data_loader import load_cms_data
 
+
 if __name__ == "__main__":
+    # constructing argument parsers
+    ap = argparse.ArgumentParser()
+    ap.add_argument('-e', '--epochs', type=int, default=50,
+                    help='number of epochs to train our autoencoder for')
+    ap.add_argument('-l', '--reg_param', type=float, default=0.01,
+                    help='regularization parameter `lambda`')
+
+    ap.add_argument('-v', '--num_variables', type=int, default=24,
+                    help='Number of variables we want to compress (either 19 or 24)')
+
+    ap.add_argument('-cn', '--custom_norm', type=bool, default=False,
+                    help='Whether we want to normalize all variables with min_max scaler or also use custom normalization for 4-momentum')
+
+    ap.add_argument('-vae', '--use_vae', type=bool, default=False,
+                    help='Whether to use Variational AE')
+    ap.add_argument('-sae', '--use_sae', type=bool, default=True,
+                    help='Whether to use Sparse AE')
+
+    args = vars(ap.parse_args())
+    epochs = args['epochs']
+    reg_param = args['reg_param']
+    use_vae = args['use_vae']
+    use_sae = args['use_sae']
+    custom_norm = args['custom_norm']
+    num_of_variables = args['num_variables']
     openCMS_data = True
-    use_vae = False
-    use_sae = True
+
     # cms_data_df = load_cms_data(filename="open_cms_data.root")
     data_df = pd.read_csv('27D_openCMS_data.csv')
-    custom_norm = False
-    num_of_variables = 24
+
+    lr = 0.001
+
     # Plot the original data
     #plot_initial_data(input_data=data_df)
 
@@ -27,12 +54,13 @@ if __name__ == "__main__":
 
         if use_vae:
             # Run the Variational Autoencoder and obtain the reconstructed data
-            test_data, reconstructed_data = vae.train(train_data=train_data, test_data=test_data, epochs=5)
+            test_data, reconstructed_data = vae.train(variables=num_of_variables, train_data=train_data, test_data=test_data, epochs=5)
             # Plot the reconstructed along with the initial data
             plot_test_pred_data(test_data, reconstructed_data, num_variables=num_of_variables, vae=True)
         elif use_sae:
             # Run the Sparse Autoencoder and obtain the reconstructed data
-            test_data, reconstructed_data = sae.train(train_data=train_data, test_data=test_data, learning_rate= 0.01, reg_param=0.1, epochs=5)
+            test_data, reconstructed_data = sae.train(variables=num_of_variables, train_data=train_data,
+                                                      test_data=test_data, learning_rate=lr, reg_param=0.01, epochs=50)
             # Plot the reconstructed along with the initial data
             plot_test_pred_data(test_data, reconstructed_data, num_variables=num_of_variables, sae=True)
         else:
