@@ -1,18 +1,12 @@
 from __future__ import print_function
-
 import time
-
 import torch
 import torch.utils.data
-from fastai.callback.progress import ShowGraphCallback
 from torch import nn, optim
 from torch.nn import functional as F
-from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, TensorDataset
-from fastai import learner
-from fastai.data import core
 import matplotlib.pyplot as plt
-
+from tqdm import tqdm
 
 class VAE(nn.Module):
     def __init__(self, n_features=24, z_dim=15):
@@ -45,8 +39,8 @@ class VAE(nn.Module):
         h4 = F.leaky_relu(self.de1(z))
         h5 = F.leaky_relu(self.de2(h4))
         h6 = F.leaky_relu(self.de3(h5))
-        #out = torch.sigmoid(self.de4(h6))
-        #.view(-1, self.n_features, self.n_features)
+        # out = torch.sigmoid(self.de4(h6))
+        # .view(-1, self.n_features, self.n_features)
         out = self.de4(h6)
         return out
 
@@ -55,85 +49,117 @@ class VAE(nn.Module):
         self.mu = mu
         self.logvar = logvar
         z = self.reparameterize(mu, logvar)
-        return self.decode(z)
-
-    # Reconstruction + KL divergence losses summed over all elements and batch
-    def vae_loss_function(self, recon_x, x):
-        #BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
-        mse_loss = nn.MSELoss()
-        MSE = mse_loss(recon_x, x)
-        # see Appendix B from VAE paper:
-        # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-        # https://arxiv.org/abs/1312.6114
-        # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-        KLD = -0.5 * torch.sum(1 + self.logvar - self.mu.pow(2) - self.logvar.exp())
-
-        return MSE + KLD
+        return self.decode(z), mu, logvar
 
 
-model = VAE()
-optimizer = optim.Adam(model.parameters(), lr=0.02)
+# Reconstruction + KL divergence losses summed over all elements and batch
+def vae_loss_function(recon_x, x, logvar, mu):
+    # BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
+    mse_loss = nn.MSELoss()
+    MSE = mse_loss(recon_x, x)
+    # see Appendix B from VAE paper:
+    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
+    # https://arxiv.org/abs/1312.6114
+    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    loss = MSE + KLD
+    return loss
 
 
+def fit(model, train_dl, train_ds, optimizer):
+    print('Training')
+    model.train()
+    running_loss = 0.0
+    counter = 0
+    for i, data in tqdm(enumerate(train_dl), total=int(len(train_ds) / train_dl.batch_size)):
+        counter += 1
+        x, _ = data
+        # x = x.view(img.size(0), -1)
+        optimizer.zero_grad()
+        reconstruction, mu, logvar = model(x)
+
+        loss = vae_loss_function(recon_x=reconstruction, x=x, mu=mu, logvar=logvar)
+
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+
+    epoch_loss = running_loss / counter
+    print(f" Train Loss: {loss:.6f}")
+
+    return epoch_loss
 
 
+def validate(model, test_dl, test_ds):
+    print('Validating')
+    model.eval()
+    running_loss = 0.0
+    counter = 0
+    with torch.no_grad():
+        for i, data in tqdm(enumerate(test_dl), total=int(len(test_ds) / test_dl.batch_size)):
+            counter += 1
+            x, _ = data
+            # x = x.view(img.size(0), -1)
+            reconstruction, mu, logvar = model(x)
+
+            loss = vae_loss_function(recon_x=reconstruction, x=x, mu=mu, logvar=logvar)
+
+            running_loss += loss.item()
+
+    epoch_loss = running_loss / counter
+    print(f" Val Loss: {loss:.6f}")
+    # save the reconstructed images every 5 epochs
+    return epoch_loss
 
 
-"""
+def train(variables, train_data, test_data, learning_rate, epochs):
+    sae = VAE(n_features=variables, z_dim=15)
 
-def train(epochs, train_data, test_data):
     # Constructs a tensor object of the data and wraps them in a TensorDataset object.
     train_ds = TensorDataset(torch.tensor(train_data.values, dtype=torch.float),
                              torch.tensor(train_data.values, dtype=torch.float))
     valid_ds = TensorDataset(torch.tensor(test_data.values, dtype=torch.float),
                              torch.tensor(test_data.values, dtype=torch.float))
 
-    bs = 256
+    bs = 512
 
     # Converts the TensorDataset into a DataLoader object and combines into one DataLoaders object (a basic wrapper
     # around several DataLoader objects).
     train_dl = DataLoader(train_ds, batch_size=bs, shuffle=True)
     valid_dl = DataLoader(valid_ds, batch_size=bs * 2)
+    # dls = core.DataLoaders(train_dl, valid_dl)
 
-    for epoch in range(1, epochs + 1):
-        model.train()
-        train_loss = 0
-        for batch_idx, (data, _) in enumerate(train_dl):
-            data = data.view(bs, 24)
+    optimizer = optim.Adam(sae.parameters(), lr=learning_rate)
 
-            optimizer.zero_grad()
-            recon_batch, mu, logvar = model(data)
-            loss = loss_function(recon_batch, data, mu, logvar)
-            loss.backward()
-            train_loss += loss.item()
-            optimizer.step()
+    # train and validate the autoencoder neural network
+    train_loss = []
+    val_loss = []
+    start = time.time()
+    for epoch in range(epochs):
+        print(f"Epoch {epoch + 1} of {epochs}")
+        train_epoch_loss = fit(model=sae, train_dl=train_dl, train_ds=train_ds,
+                               optimizer=optimizer)
+        val_epoch_loss = validate(model=sae, test_dl=valid_dl, test_ds=valid_ds)
+        train_loss.append(train_epoch_loss)
+        val_loss.append(val_epoch_loss)
+    end = time.time()
 
-            if batch_idx % 10 == 0:
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch, batch_idx * len(data), len(train_dl),
-                           100. * batch_idx / len(train_dl),
-                           loss.item() / len(data)))
+    print(f"{(end - start) / 60:.3} minutes")
 
-        print('====> Epoch: {} Average loss: {:.4f}'.format(
-            epoch, train_loss / len(train_dl)))
-
-        model.eval()
-        test_loss = 0
-        with torch.no_grad():
-            for i, (data, _) in enumerate(valid_dl):
-                recon_batch, mu, logvar = model(data)
-                test_loss += loss_function(recon_batch, data, mu, logvar).item()
-
-        test_loss /= len(valid_dl)
-        print('====> Test set loss: {:.4f}'.format(test_loss))
+    # loss plots
+    plt.figure(figsize=(10, 7))
+    plt.plot(train_loss, color='orange', label='train loss')
+    plt.plot(val_loss, color='red', label='validataion loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.savefig('D:\Desktop\GSoC-ATLAS\learning_curves\sae_loss.png')
+    plt.show()
 
     data = torch.tensor(test_data.values, dtype=torch.float)
 
-    pred = model(data)[0]
-    pred = pred.detach().numpy()
+    pred = sae(data)
+    pred = pred[0].detach().numpy()
     data = data.detach().numpy()
 
     return data, pred
-"""
-
-

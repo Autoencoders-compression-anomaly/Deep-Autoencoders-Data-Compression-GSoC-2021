@@ -4,7 +4,9 @@ import pandas as pd
 import numpy as np
 #import corner
 #import arviz as az
+import seaborn as sns
 
+sns.set_theme(style="white")
 
 def plot_initial_data(input_data, num_variables, normalized=False):
     input_data = input_data.sort_values(by=['ak5PFJets_pt_'])
@@ -208,14 +210,23 @@ def plot_residuals(test_data, predicted_data):
     plt.show()
 
 
-def correlation_plots(test_data, predicted_data):
-    pt = 'ak5PFJets_pt_'
-    eta = 'ak5PFJets_eta_'
-    phi = 'ak5PFJets_phi_'
-    mass = 'ak5PFJets_mass_'
-    test_data = test_data[[pt, eta, phi, mass]]
-    #predicted_data = predicted_data[[pt, eta, phi, mass]]
+def correlation_plot(data):
+    data = data.drop(['entry', 'subentry'], axis=1)
+    data.columns = data.columns.str.lstrip("ak5PFJets")
+    data.columns = data.columns.str.lstrip("_")
 
-    figure = corner.corner(test_data)
-    #corner.corner(predicted_data, fig=figure, color='red')
+    # Compute the correlation matrix
+    corr = data.corr()
+
+    # Generate a mask for the upper triangle
+    mask = np.triu(np.ones_like(corr, dtype=bool))
+
+    # Set up the matplotlib figure
+    f, ax = plt.subplots(figsize=(11, 9))
+
+    # Generate a custom diverging colormap
+    cmap = sns.diverging_palette(230, 20, as_cmap=True)
+
+    # Draw the heatmap with the mask and correct aspect ratio
+    sns.heatmap(corr, mask=mask, cmap=cmap, vmax=.3, center=0, square=True, linewidths=.5, cbar_kws={"shrink": .5})
     plt.show()

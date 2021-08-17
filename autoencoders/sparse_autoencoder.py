@@ -44,7 +44,7 @@ class SAE(nn.Module):
         return self.decode(z)
 
 
-def sparse_loss_function(model_children, true_data, reconstructed_data, reg_param=None, evaluate=False):
+def sparse_loss_function_L1(model_children, true_data, reconstructed_data, reg_param=None, evaluate=False):
     mse = nn.MSELoss()
     mse_loss = mse(reconstructed_data, true_data)
 
@@ -62,7 +62,32 @@ def sparse_loss_function(model_children, true_data, reconstructed_data, reg_para
     return loss
 
 
-def fit(model, train_dl, train_ds, model_children, regular_param, optimizer):
+def kl_divergence(rho, rho_hat):
+    # sigmoid because we need the probability distributions
+    rho_hat = torch.mean(torch.sigmoid(rho_hat), 1)
+    rho = torch.tensor([rho] * len(rho_hat))
+    return torch.sum(rho * torch.log(rho/rho_hat) + (1 - rho) * torch.log((1 - rho)/(1 - rho_hat)))
+
+
+def sparse_loss_function_KL(rho, model_children, true_data, reconstructed_data, reg_param=None, evaluate=False):
+    mse = nn.MSELoss()
+    mse_loss = mse(reconstructed_data, true_data)
+
+    if not evaluate:
+        kl_loss = 0
+        values = true_data
+        for i in range(len(model_children)):
+            values = model_children[i](values)
+            kl_loss += kl_divergence(rho, values)
+
+        loss = mse_loss + reg_param * kl_loss
+    else:
+        loss = mse_loss
+
+    return loss
+
+
+def fit(model, train_dl, train_ds, model_children, regular_param, optimizer, RHO, l1):
     print('Training')
     model.train()
     running_loss = 0.0
@@ -74,8 +99,13 @@ def fit(model, train_dl, train_ds, model_children, regular_param, optimizer):
         optimizer.zero_grad()
         reconstructions = model(x)
 
-        loss = sparse_loss_function(model_children=model_children, true_data=x, reconstructed_data=reconstructions,
-                                    reg_param=regular_param)
+        if l1:
+            loss = sparse_loss_function_L1(model_children=model_children, true_data=x, reconstructed_data=reconstructions,
+                                           reg_param=regular_param)
+        else:
+            loss = sparse_loss_function_KL(rho=RHO, model_children=model_children, true_data=x,
+                                           reconstructed_data=reconstructions,
+                                           reg_param=regular_param)
 
         loss.backward()
         optimizer.step()
@@ -98,8 +128,8 @@ def validate(model, test_dl, test_ds, model_children):
             x, _ = data
             # x = x.view(img.size(0), -1)
             reconstructions = model(x)
-            loss = sparse_loss_function(model_children=model_children, true_data=x, reconstructed_data=reconstructions,
-                                        evaluate=True)
+            loss = sparse_loss_function_L1(model_children=model_children, true_data=x, reconstructed_data=reconstructions,
+                                           evaluate=True)
             running_loss += loss.item()
 
     epoch_loss = running_loss / counter
@@ -108,7 +138,7 @@ def validate(model, test_dl, test_ds, model_children):
     return epoch_loss
 
 
-def train(variables, train_data, test_data, learning_rate, reg_param, epochs):
+def train(variables, train_data, test_data, learning_rate, reg_param, RHO, l1, epochs):
     sae = SAE(n_features=variables, z_dim=15)
     model_children = list(sae.children())
 
@@ -135,7 +165,7 @@ def train(variables, train_data, test_data, learning_rate, reg_param, epochs):
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1} of {epochs}")
         train_epoch_loss = fit(model=sae, train_dl=train_dl, train_ds=train_ds, model_children=model_children,
-                               optimizer=optimizer, regular_param=reg_param)
+                               optimizer=optimizer, RHO=RHO, regular_param=reg_param, l1=l1)
         val_epoch_loss = validate(model=sae, test_dl=valid_dl, test_ds=valid_ds, model_children=model_children)
         train_loss.append(train_epoch_loss)
         val_loss.append(val_epoch_loss)
