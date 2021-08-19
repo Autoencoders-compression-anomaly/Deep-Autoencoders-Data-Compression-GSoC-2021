@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+
 class VAE(nn.Module):
     def __init__(self, n_features=24, z_dim=15):
         super(VAE, self).__init__()
@@ -39,15 +40,11 @@ class VAE(nn.Module):
         h4 = F.leaky_relu(self.de1(z))
         h5 = F.leaky_relu(self.de2(h4))
         h6 = F.leaky_relu(self.de3(h5))
-        # out = torch.sigmoid(self.de4(h6))
-        # .view(-1, self.n_features, self.n_features)
         out = self.de4(h6)
         return out
 
     def forward(self, x):
         mu, logvar = self.encode(x.view(-1, self.n_features))
-        self.mu = mu
-        self.logvar = logvar
         z = self.reparameterize(mu, logvar)
         return self.decode(z), mu, logvar
 
@@ -74,7 +71,6 @@ def fit(model, train_dl, train_ds, optimizer):
     for i, data in tqdm(enumerate(train_dl), total=int(len(train_ds) / train_dl.batch_size)):
         counter += 1
         x, _ = data
-        # x = x.view(img.size(0), -1)
         optimizer.zero_grad()
         reconstruction, mu, logvar = model(x)
 
@@ -99,7 +95,6 @@ def validate(model, test_dl, test_ds):
         for i, data in tqdm(enumerate(test_dl), total=int(len(test_ds) / test_dl.batch_size)):
             counter += 1
             x, _ = data
-            # x = x.view(img.size(0), -1)
             reconstruction, mu, logvar = model(x)
 
             loss = vae_loss_function(recon_x=reconstruction, x=x, mu=mu, logvar=logvar)
@@ -123,11 +118,9 @@ def train(variables, train_data, test_data, learning_rate, epochs):
 
     bs = 512
 
-    # Converts the TensorDataset into a DataLoader object and combines into one DataLoaders object (a basic wrapper
-    # around several DataLoader objects).
+    # Converts the TensorDataset into a DataLoader object
     train_dl = DataLoader(train_ds, batch_size=bs, shuffle=True)
     valid_dl = DataLoader(valid_ds, batch_size=bs * 2)
-    # dls = core.DataLoaders(train_dl, valid_dl)
 
     optimizer = optim.Adam(sae.parameters(), lr=learning_rate)
 

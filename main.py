@@ -1,8 +1,8 @@
-from data_processing import preprocess_28D, preprocess_4D
+from data_processing import preprocess_28D
 import autoencoders.autoencoder as ae
 import autoencoders.variational_autoencoder as vae
 import autoencoders.sparse_autoencoder as sae
-from create_plots import plot_initial_data, plot_test_pred_data, plot_4D_data, correlation_plot
+from create_plots import plot_initial_data, plot_test_pred_data, correlation_plot
 from evaluate import evaluate_model
 import pandas as pd
 import argparse
@@ -14,10 +14,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('-e', '--epochs', type=int, default=50,
                     help='number of epochs to train our autoencoder for')
-    ap.add_argument('-l', '--reg_param', type=float, default=0.001,
-                    help='regularization parameter `lambda`')
 
-    ap.add_argument('-v', '--num_variables', type=int, default=19,
+    ap.add_argument('-v', '--num_variables', type=int, default=24,
                     help='Number of variables we want to compress (either 19 or 24)')
 
     ap.add_argument('-cn', '--custom_norm', type=bool, default=False,
@@ -29,15 +27,18 @@ if __name__ == "__main__":
                     help='Whether to use Sparse AE')
     ap.add_argument('-l1', '--l1', type=bool, default=False,
                     help='Whether to use L1 loss or KL-divergence in the Sparse AE')
+    ap.add_argument('-p', '--plot', type=bool, default=False,
+                    help='Whether to use L1 loss or KL-divergence in the Sparse AE')
 
     args = vars(ap.parse_args())
     epochs = args['epochs']
-    reg_param = args['reg_param']
     use_vae = args['use_vae']
     use_sae = args['use_sae']
     custom_norm = args['custom_norm']
     num_of_variables = args['num_variables']
+    create_plots = args['plot']
     l1 = args['l1']
+    reg_param = 0.001
     # sparsity parameter for KL loss in SAE
     RHO = 0.05
     # learning rate
@@ -46,17 +47,19 @@ if __name__ == "__main__":
     # cms_data_df = load_cms_data(filename="open_cms_data.root")
     data_df = pd.read_csv('27D_openCMS_data.csv')
 
-    # Plot the original data
-    #plot_initial_data(input_data=data_df)
+    if create_plots:
+        # Plot the original data
+        plot_initial_data(input_data=data_df, num_variables=num_of_variables)
 
-    # Plot correlation matrix between the input variables of the data
-    correlation_plot(data_df)
+        # Plot correlation matrix between the input variables of the data
+        correlation_plot(data_df)
 
     # Preprocess data
     data_df, train_data, test_data, scaler = preprocess_28D(data_df=data_df, num_variables=num_of_variables, custom_norm=custom_norm)
 
-    # Plot preprocessed data
-    #plot_initial_data(input_data=data_df, num_variables=num_of_variables, normalized=True)
+    if create_plots:
+        # Plot preprocessed data
+        plot_initial_data(input_data=data_df, num_variables=num_of_variables, normalized=True)
 
     if use_vae:
         # Run the Variational Autoencoder and obtain the reconstructed data
@@ -80,5 +83,3 @@ if __name__ == "__main__":
 
     # Evaluate the reconstructions of the network based on various metrics
     evaluate_model(y_true=test_data, y_predicted=reconstructed_data)
-
-

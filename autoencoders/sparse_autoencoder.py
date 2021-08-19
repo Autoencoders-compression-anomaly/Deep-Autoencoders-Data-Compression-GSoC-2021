@@ -95,7 +95,6 @@ def fit(model, train_dl, train_ds, model_children, regular_param, optimizer, RHO
     for i, data in tqdm(enumerate(train_dl), total=int(len(train_ds) / train_dl.batch_size)):
         counter += 1
         x, _ = data
-        # x = x.view(img.size(0), -1)
         optimizer.zero_grad()
         reconstructions = model(x)
 
@@ -126,7 +125,6 @@ def validate(model, test_dl, test_ds, model_children):
         for i, data in tqdm(enumerate(test_dl), total=int(len(test_ds) / test_dl.batch_size)):
             counter += 1
             x, _ = data
-            # x = x.view(img.size(0), -1)
             reconstructions = model(x)
             loss = sparse_loss_function_L1(model_children=model_children, true_data=x, reconstructed_data=reconstructions,
                                            evaluate=True)
@@ -154,7 +152,6 @@ def train(variables, train_data, test_data, learning_rate, reg_param, RHO, l1, e
     # around several DataLoader objects).
     train_dl = DataLoader(train_ds, batch_size=bs, shuffle=True)
     valid_dl = DataLoader(valid_ds, batch_size=bs * 2)
-    # dls = core.DataLoaders(train_dl, valid_dl)
 
     optimizer = optim.Adam(sae.parameters(), lr=learning_rate)
 

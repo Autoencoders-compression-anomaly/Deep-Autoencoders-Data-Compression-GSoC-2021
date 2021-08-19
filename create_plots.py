@@ -1,12 +1,10 @@
 import os
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
-#import corner
-#import arviz as az
 import seaborn as sns
 
 sns.set_theme(style="white")
+
 
 def plot_initial_data(input_data, num_variables, normalized=False):
     input_data = input_data.sort_values(by=['ak5PFJets_pt_'])
@@ -19,7 +17,7 @@ def plot_initial_data(input_data, num_variables, normalized=False):
     prefix = 'ak5PFJets_'
 
     if num_variables == 24:
-        save_dir = "D:\Desktop\GSoC-ATLAS\preprocessed_data_plots\d24"
+        save_dir = "D:\Desktop\preprocessed_data_plots\d24"
 
         variable_list = ['pt_', 'eta_', 'phi_', 'mass_', 'mJetArea',
                          'mChargedHadronEnergy', 'mNeutralHadronEnergy',
@@ -97,11 +95,11 @@ def plot_initial_data(input_data, num_variables, normalized=False):
             plt.suptitle(variable_list[kk])
             if save:
                 plt.savefig(os.path.join(save_dir, variable_list[kk] + '.png'))
+        plt.figure()
         plt.show()
 
 
 def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False, sae=False):
-
     if num_variables == 24:
         if sae:
             save_dir = "D:\Desktop\GSoC-ATLAS\SAE_plots\d24"
@@ -145,9 +143,6 @@ def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False, sae
     n_bins = 100
     save = True  # Option to save figure
 
-    #predicted_data = predicted_data.detach().numpy()
-    #test_data = test_data.values
-
     # plot the input data along with the reconstructed from the AE
     for kk in np.arange(num_variables):
         plt.figure()
@@ -161,19 +156,16 @@ def plot_test_pred_data(test_data, predicted_data, num_variables, vae=False, sae
         if save:
             plt.savefig(os.path.join(save_dir, variable_list[kk] + '.png'))
 
+        plt.show()
+
 
 def plot_4D_data(test_data, predicted_data):
-
     save_dir = "D:\Desktop\GSoC-ATLAS\AE_4D_plots"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    save = True
-
     variable_list = [r'$E$', r'$p_T$', r'$\eta$', r'$\phi$']
     colors = ['pink', 'green']
-
-    #test_data = test_data.values
 
     alph = 0.8
     n_bins = 200
@@ -193,7 +185,7 @@ def plot_4D_data(test_data, predicted_data):
 def plot_residuals(test_data, predicted_data):
     # Calculate the residuals
     residual_test = np.absolute(test_data - predicted_data)
-    #residual_train = np.absolute(train_data - prediction_train)
+    # residual_train = np.absolute(train_data - prediction_train)
     plt.figure()
 
     # Plotting the scatter plots

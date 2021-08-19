@@ -169,16 +169,3 @@ def preprocess_4D(input_path):
     # split the data into train and test with a ratio of 20%
     train_set, test_set = train_test_split(data_df, test_size=0.2, random_state=1)
     return data_df, train_set, test_set
-
-
-"""
-    A function to scale back the data to the original representation and 
-    handle the integer-variables which have been transformed to floats during normalization
-"""
-
-
-def post_process_28D(data_df, scaler):
-    # TODO
-    data_df[data_df.columns] = scaler.inverse_transform(data_df)
-
-    return data_df
