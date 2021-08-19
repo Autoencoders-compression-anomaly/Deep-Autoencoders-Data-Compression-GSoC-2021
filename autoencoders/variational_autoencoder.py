@@ -16,7 +16,11 @@ class VAE(nn.Module):
         self.en1 = nn.Linear(n_features, 200)
         self.en2 = nn.Linear(200, 100)
         self.en3 = nn.Linear(100, 50)
-        self.en4 = nn.Linear(50, z_dim)
+
+        # distribution parameters
+        self.fc_mu = nn.Linear(50, z_dim)
+        self.fc_logvar = nn.Linear(50, z_dim)
+
         self.de1 = nn.Linear(z_dim, 50)
         self.de2 = nn.Linear(50, 100)
         self.de3 = nn.Linear(100, 200)
@@ -29,7 +33,7 @@ class VAE(nn.Module):
         h1 = F.leaky_relu(self.en1(x))
         h2 = F.leaky_relu(self.en2(h1))
         h3 = F.leaky_relu(self.en3(h2))
-        return self.en4(h3), self.en4(h3)
+        return self.fc_mu(h3), self.fc_logvar(h3)
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)

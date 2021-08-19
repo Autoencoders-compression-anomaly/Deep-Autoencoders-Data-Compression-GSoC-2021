@@ -21,7 +21,7 @@ if __name__ == "__main__":
     ap.add_argument('-cn', '--custom_norm', type=bool, default=False,
                     help='Whether to normalize all variables with min_max scaler or also use custom normalization for 4-momentum')
 
-    ap.add_argument('-vae', '--use_vae', type=bool, default=False,
+    ap.add_argument('-vae', '--use_vae', type=bool, default=True,
                     help='Whether to use Variational AE')
     ap.add_argument('-sae', '--use_sae', type=bool, default=False,
                     help='Whether to use Sparse AE')
