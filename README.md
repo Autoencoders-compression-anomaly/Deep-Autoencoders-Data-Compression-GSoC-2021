@@ -6,8 +6,11 @@ ML data compression of ATLAS trigger jet events using various deep autoencoders,
 
 This repository is developed by George Dialektakis, as a Google Summer of Code (GSoC) student
 
+[Setup](#setup)
+
 [Data extraction](#data-extraction)
 
+## Setup
 
 
 ## Data extraction
