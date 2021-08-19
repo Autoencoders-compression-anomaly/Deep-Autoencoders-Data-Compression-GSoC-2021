@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # learning rate
     lr = 0.001
 
-    # cms_data_df = load_cms_data(filename="open_cms_data.root")
+    cms_data_df = load_cms_data(filename="open_cms_data.root")
     data_df = pd.read_csv('27D_openCMS_data.csv')
 
     if create_plots:
