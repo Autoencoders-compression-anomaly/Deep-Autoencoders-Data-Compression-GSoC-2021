@@ -11,4 +11,4 @@ This repository is developed by George Dialektakis, as a Google Summer of Code (
 
 
 ## Data extraction
-The data that were used for this project can be downloaded from [CERN Open Data Portal](http://opendata.cern.ch/record/6010). The file that was used is: *00992A80-DF70-E211-9872-0026189437FE.root* under the filename *CMS_Run2012B_JetHT_AOD_22Jan2013-v1_20000_file_index.txt*. The data can then be loaded with the *data_loader.py* script which produces a pandas dataframe from the ROOT file.
+The data that were used for this project can be downloaded from [CERN Open Data Portal](http://opendata.cern.ch/record/6010). The file that was used is: *00992A80-DF70-E211-9872-0026189437FE.root* under the filename *CMS_Run2012B_JetHT_AOD_22Jan2013-v1_20000_file_index.txt*. The data can then be loaded with the `data_loader()` script which produces a pandas dataframe from the ROOT file.
