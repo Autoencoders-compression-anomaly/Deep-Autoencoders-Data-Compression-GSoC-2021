@@ -11,6 +11,14 @@ This repository is developed by George Dialektakis, as a Google Summer of Code (
 [Data extraction](#data-extraction)
 
 ## Setup
+First, clone the latest version of the project to any directory of your choice:
+```
+git clone https://github.com/Autoencoders-compression-anomaly/Deep-Autoencoders-Data-Compression-GSoC-2021.git
+```
+Install dependencies:
+```
+pip3 install -r requirements.txt
+```
 
 
 ## Data extraction
