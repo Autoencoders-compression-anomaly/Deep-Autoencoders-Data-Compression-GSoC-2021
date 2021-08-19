@@ -12,6 +12,8 @@ This repository is developed by George Dialektakis, as a Google Summer of Code (
 
 [Data extraction](#data-extraction)
 
+[Project Structure Description](#project-structure-description)
+
 ## Setup
 First, clone the latest version of the project to any directory of your choice:
 ```
@@ -45,3 +47,17 @@ The above command will train the Sparse Autoencoder for 30 epochs to compress th
 
 ## Data extraction
 The data that were used for this project can be downloaded from [CERN Open Data Portal](http://opendata.cern.ch/record/6010). The file that was used is: *00992A80-DF70-E211-9872-0026189437FE.root* under the filename *CMS_Run2012B_JetHT_AOD_22Jan2013-v1_20000_file_index.txt*. The data can then be loaded with `data_loader()`, which produces a pandas dataframe from the ROOT file.
+
+## Project Structure Description
+- `data_loader.py` loads the data from a ROOT file and creates a pandas dataframe.
+
+- `data_processing.py` makes all the necessary preprocessing steps for our data (filtering, normalization, train-test split)
+
+- `create_plots.py` holds all the necessary functions to plot the initial, preprocessed and reconstructed data
+
+- `autoencoders/` holds the implementation of three different Autoencoder types we considered (Standard AE, Sparse AE, Variational AE)
+
+- `evaluate.py` performs the evaluation of the autoencoder on the test data in terms of MSE, RMSE loss, and residuals
+
+- `main.py` is the main script which runs the whole code
+
