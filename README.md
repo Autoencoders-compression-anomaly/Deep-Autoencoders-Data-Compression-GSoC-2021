@@ -8,6 +8,8 @@ This repository is developed by George Dialektakis, as a Google Summer of Code (
 
 [Setup](#setup)
 
+[Running the code](#running-the-code)
+
 [Data extraction](#data-extraction)
 
 ## Setup
@@ -20,6 +22,26 @@ Install dependencies:
 pip3 install -r requirements.txt
 ```
 
+## Running the code
+```
+usage: python main.py [--use_vae] [--use_sae] [--l1] [--epochs] [--custom_norm]
+                      [--num_variables] [--plot]
+
+optional arguments:
+  --use_vae            whether to use Variational AE (default: False)
+  --use_sae            whether to use Sparse AE (default: False)
+  --l1                 whether to use L1 loss or KL-divergence in the Sparse AE (default: True)
+  --epochs             number of epochs to train (default: 50)
+  --custom_norm        whether to normalize all variables with min_max scaler or also use custom normalization for 4-momentum (default: False)
+  --num_variables      number of variables we want to compress (either 19 or 24) (default: 24)
+  --plot               whether to make plots (default: False)
+```
+Example:
+
+```
+python main.py --use_sae True --epochs 30 --num_variables 19 --plot True
+```
+The above command will train the Sparse Autoencoder for 30 epochs to compress the 19D data and will make plots of the input and preprocessed data.
 
 ## Data extraction
 The data that were used for this project can be downloaded from [CERN Open Data Portal](http://opendata.cern.ch/record/6010). The file that was used is: *00992A80-DF70-E211-9872-0026189437FE.root* under the filename *CMS_Run2012B_JetHT_AOD_22Jan2013-v1_20000_file_index.txt*. The data can then be loaded with `data_loader()`, which produces a pandas dataframe from the ROOT file.
