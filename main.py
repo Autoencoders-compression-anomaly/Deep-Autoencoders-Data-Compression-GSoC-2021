@@ -19,16 +19,16 @@ if __name__ == "__main__":
                     help='Number of variables we want to compress (either 19 or 24)')
 
     ap.add_argument('-cn', '--custom_norm', type=bool, default=False,
-                    help='Whether we want to normalize all variables with min_max scaler or also use custom normalization for 4-momentum')
+                    help='Whether to normalize all variables with min_max scaler or also use custom normalization for 4-momentum')
 
     ap.add_argument('-vae', '--use_vae', type=bool, default=False,
                     help='Whether to use Variational AE')
     ap.add_argument('-sae', '--use_sae', type=bool, default=False,
                     help='Whether to use Sparse AE')
-    ap.add_argument('-l1', '--l1', type=bool, default=False,
+    ap.add_argument('-l1', '--l1', type=bool, default=True,
                     help='Whether to use L1 loss or KL-divergence in the Sparse AE')
     ap.add_argument('-p', '--plot', type=bool, default=False,
-                    help='Whether to use L1 loss or KL-divergence in the Sparse AE')
+                    help='Whether to make plots')
 
     args = vars(ap.parse_args())
     epochs = args['epochs']
