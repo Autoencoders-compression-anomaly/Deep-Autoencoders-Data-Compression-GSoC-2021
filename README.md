@@ -61,3 +61,4 @@ The data that were used for this project can be downloaded from [CERN Open Data 
 
 - `main.py` is the main script which runs the whole code
 
+You can find more details about this project as well as the experimental analysis and the results in `report.pdf`
